@@ -10,10 +10,7 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint modules/**/*.{js,ts,jsx,tsx}",
     "lint:fix": "eslint modules/**/*.{js,ts,jsx,tsx} --fix",
-    "type-check": "tsc --noEmit",
-    "setup": "bash scripts/setup.sh",
-    "create-branch": "bash scripts/create-student-branch.sh",
-    "check-progress": "node scripts/check-progress.js"
+    "type-check": "tsc --noEmit"
   },
   "keywords": [
     "javascript",

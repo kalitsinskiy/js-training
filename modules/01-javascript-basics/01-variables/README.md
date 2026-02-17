@@ -1,23 +1,23 @@
 # 📦 Variables in JavaScript
 
-## 🎯 Цілі навчання
+## 🎯 Learning Goals
 
-Після завершення цього модуля ви зможете:
-- Розуміти різницю між `let`, `const` та `var`
-- Пояснити поняття hoisting
-- Розуміти block scope vs function scope
-- Правильно вибирати між `let` та `const`
-- Уникати типових помилок з областю видимості
+After completing this module, you will be able to:
+- Understand the difference between `let`, `const`, and `var`
+- Explain the concept of hoisting
+- Understand block scope vs function scope
+- Correctly choose between `let` and `const`
+- Avoid common mistakes with scope
 
-## 📚 Теорія
+## 📚 Theory
 
-### 1. `let` - Змінна з block scope
+### 1. `let` - Variable with block scope
 
-`let` дозволяє оголосити змінну, яка обмежена block scope (області видимості блоку).
+`let` allows you to declare a variable that is limited to block scope.
 
 ```javascript
 let name = 'Ivan';
-name = 'Petro'; // ✓ OK - можна змінювати
+name = 'Petro'; // ✓ OK - can be reassigned
 
 if (true) {
   let age = 25;
@@ -26,79 +26,79 @@ if (true) {
 console.log(age); // ❌ Error: age is not defined
 ```
 
-**Особливості:**
-- Значення можна змінювати
-- Не можна повторно оголошувати в тій же області видимості
-- Block-scoped (доступна тільки в межах блоку `{}`)
-- Не підлягає hoisting (не можна використати до оголошення)
+**Features:**
+- Value can be reassigned
+- Cannot be redeclared in the same scope
+- Block-scoped (accessible only within the block `{}`)
+- Not subject to hoisting (cannot be used before declaration)
 
-### 2. `const` - Константа
+### 2. `const` - Constant
 
-`const` оголошує константу - змінну, значення якої не можна змінити.
+`const` declares a constant - a variable whose value cannot be reassigned.
 
 ```javascript
 const PI = 3.14159;
 PI = 3.14; // ❌ Error: Assignment to constant variable
 
 const user = { name: 'Ivan' };
-user.name = 'Petro'; // ✓ OK - можна змінювати властивості об'єкта
-user = {}; // ❌ Error - не можна перепризначити константу
+user.name = 'Petro'; // ✓ OK - can modify object properties
+user = {}; // ❌ Error - cannot reassign the constant
 ```
 
-**Особливості:**
-- Значення не можна перепризначити
-- Повинна бути ініціалізована при оголошенні
+**Features:**
+- Value cannot be reassigned
+- Must be initialized at declaration
 - Block-scoped
-- Для об'єктів та масивів - можна змінювати вміст, але не саму змінну
+- For objects and arrays - can modify contents, but not the variable itself
 
-### 3. `var` - Застаріла змінна (не рекомендується)
+### 3. `var` - Deprecated variable (not recommended)
 
-`var` - старий спосіб оголошення змінних з function scope.
+`var` - the old way of declaring variables with function scope.
 
 ```javascript
 var oldVar = 'old';
-var oldVar = 'new'; // ✓ OK - можна повторно оголошувати (поганонаше практика)
+var oldVar = 'new'; // ✓ OK - can be redeclared (bad practice)
 
 if (true) {
   var test = 'value';
 }
-console.log(test); // 'value' - var не обмежена блоком!
+console.log(test); // 'value' - var is not block-scoped!
 ```
 
-**Проблеми з `var`:**
-- Function-scoped, а не block-scoped
-- Можна повторно оголошувати
-- Hoisting (підіймається на початок функції)
-- Може призвести до непередбачуваних багів
+**Problems with `var`:**
+- Function-scoped, not block-scoped
+- Can be redeclared
+- Hoisting (hoisted to the beginning of the function)
+- Can lead to unpredictable bugs
 
 ### 4. Hoisting
 
-Hoisting - механізм JavaScript, при якому оголошення змінних та функцій "піднімаються" на початок області видимості.
+Hoisting - a JavaScript mechanism where variable and function declarations are "hoisted" to the top of their scope.
 
 ```javascript
-console.log(x); // undefined (не error!)
+console.log(x); // undefined (not error!)
 var x = 5;
 
-// Інтерпретується як:
+// Interpreted as:
 var x;
 console.log(x); // undefined
 x = 5;
 
-// З let/const - error
+// With let/const - error
 console.log(y); // ❌ ReferenceError
 let y = 10;
 ```
 
-### 5. Коли використовувати `let` vs `const`
+### 5. When to use `let` vs `const`
 
-**Використовуйте `const` за замовчуванням:**
+**Use `const` by default:**
 ```javascript
 const MAX_SIZE = 100;
 const users = ['Ivan', 'Petro'];
 const config = { theme: 'dark' };
 ```
 
-**Використовуйте `let` тільки якщо значення буде змінюватись:**
+**Use `let` only if the value will be reassigned:**
 ```javascript
 let counter = 0;
 counter++;
@@ -107,30 +107,30 @@ let message = 'Hello';
 message = 'Goodbye';
 
 for (let i = 0; i < 10; i++) {
-  // i змінюється в циклі
+  // i changes in the loop
 }
 ```
 
-**Ніколи не використовуйте `var`** (застарілий, використовуйте `let` або `const`)
+**Never use `var`** (deprecated, use `let` or `const` instead)
 
-## 📂 Структура модуля
+## 📂 Module Structure
 
 ```
 01-variables/
-├── README.md              # Ця інструкція
-├── examples/              # Робочі приклади
-│   ├── let-const.js       # Приклади let та const
-│   ├── var-hoisting.js    # Проблеми з var
-│   └── scope.js           # Області видимості
-├── exercises/             # Ваші завдання
-│   └── variables.js       # Завдання для виконання
-└── __tests__/             # Тести
-    └── variables.test.js  # Перевірка вашого коду
+├── README.md              # This instruction
+├── examples/              # Working examples
+│   ├── let-const.js       # Examples of let and const
+│   ├── var-hoisting.js    # Problems with var
+│   └── scope.js           # Scopes
+├── exercises/             # Your tasks
+│   └── variables.js       # Exercises to complete
+└── __tests__/             # Tests
+    └── variables.test.js  # Code verification
 ```
 
-## 🚀 Як працювати з цим модулем
+## 🚀 How to Work with This Module
 
-### Крок 1: Вивчіть приклади
+### Step 1: Study the examples
 
 ```bash
 node examples/let-const.js
@@ -138,40 +138,40 @@ node examples/var-hoisting.js
 node examples/scope.js
 ```
 
-### Крок 2: Виконайте вправи
+### Step 2: Complete the exercises
 
-Відкрийте `exercises/variables.js` та виконайте завдання з TODO.
+Open `exercises/variables.js` and complete the TODO tasks.
 
-### Крок 3: Запустіть тести
+### Step 3: Run the tests
 
 ```bash
-# З кореневої папки проекту
+# From the project root directory
 npm test -- 01-variables
 ```
 
-### Крок 4: Закомітьте результат
+### Step 4: Commit the result
 
 ```bash
 git add exercises/variables.js
 git commit -m "Completed 01-variables"
 ```
 
-## 🎓 Додаткові ресурси
+## 🎓 Additional Resources
 
 - [MDN: let](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let)
 - [MDN: const](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const)
 - [MDN: var](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/var)
 - [MDN: Hoisting](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting)
 
-## ✅ Чеклист
+## ✅ Checklist
 
-- [ ] Прочитано теорію
-- [ ] Запущено всі приклади
-- [ ] Виконано всі вправи
-- [ ] Всі тести пройшли
-- [ ] Зрозуміла різниця між let, const, var
-- [ ] Розумію hoisting та scope
+- [ ] Read the theory
+- [ ] Run all examples
+- [ ] Complete all exercises
+- [ ] All tests pass
+- [ ] Understand the difference between let, const, var
+- [ ] Understand hoisting and scope
 
 ---
 
-**Готові? Переходьте до прикладів!** 🚀
+**Ready? Move on to the examples!** 🚀

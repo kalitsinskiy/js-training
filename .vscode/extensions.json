@@ -1,0 +1,24 @@
+{
+  "recommendations": [
+    // Essential for JavaScript/TypeScript development
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "christian-kohler.npm-intellisense",
+
+    // Testing
+    "orta.vscode-jest",
+    "firsttris.vscode-jest-runner",
+
+    // TypeScript
+    "yoavbls.pretty-ts-errors",
+
+    // Git
+    "eamodio.gitlens",
+
+    // Code Runner (optional but helpful)
+    "formulahendry.code-runner"
+  ],
+  "unwantedRecommendations": [
+    // Extensions that might conflict or are not needed
+  ]
+}

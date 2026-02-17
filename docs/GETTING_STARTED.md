@@ -1,106 +1,262 @@
 # 🎓 Getting Started Guide
 
-Детальний посібник для початку роботи з навчальним репозиторієм.
+A detailed guide to get started with the training repository.
 
-## 📋 Передумови
+## 📋 Prerequisites
 
-Перед початком переконайтеся, що у вас встановлено:
+Before starting, make sure you have installed:
 
-### 1. Node.js та npm
+### 1. Node.js and npm
 
-**Перевірка встановлення:**
+**Installation verification:**
 ```bash
 node -v
 npm -v
 ```
 
-Якщо не встановлено, завантажте з [nodejs.org](https://nodejs.org/) (рекомендована LTS версія).
+If not installed, download from [nodejs.org](https://nodejs.org/) (LTS version recommended).
 
 ### 2. Git
 
-**Перевірка встановлення:**
+**Installation verification:**
 ```bash
 git --version
 ```
 
-Якщо не встановлено, завантажте з [git-scm.com](https://git-scm.com/).
+If not installed, download from [git-scm.com](https://git-scm.com/).
 
-### 3. Редактор коду
+### 3. Code Editor (VS Code Highly Recommended)
 
-Рекомендуємо:
-- [Visual Studio Code](https://code.visualstudio.com/)
-- [WebStorm](https://www.jetbrains.com/webstorm/)
+**We strongly recommend using Visual Studio Code for this course, even if you prefer other editors.**
 
-## 🚀 Покрокова інструкція
+#### Why VS Code?
 
-### Крок 1: Клонування репозиторію
+This project is **pre-configured for VS Code** with:
+
+✅ **Ready-to-use settings** - Formatting, linting, auto-save
+✅ **Recommended extensions** - Installed automatically on first open
+✅ **Debug configurations** - One-click debugging for JS/TS files and tests
+✅ **Jest integration** - Run and debug tests directly from editor
+✅ **TypeScript support** - Better error messages and IntelliSense
+
+**Installation:**
+- Download from [code.visualstudio.com](https://code.visualstudio.com/)
+- Available for Windows, macOS, and Linux
+- 100% free and open source
+
+**First time opening the project in VS Code:**
+```bash
+code .
+```
+
+VS Code will show a notification in the bottom-right corner:
+> "This workspace has extension recommendations"
+
+Click **"Install All"** to automatically install all recommended extensions for the best experience.
+
+Alternatively, you can:
+- Click **"Show Recommendations"** to review extensions before installing
+- Press `Cmd+Shift+X` (macOS) or `Ctrl+Shift+X` (Windows/Linux) and look for the "Recommended" section
+
+**💡 Pro Tip: Enable Auto Save**
+
+Auto-save is extremely useful when working with tests in watch mode:
+
+1. Open VS Code settings: `Cmd+,` (macOS) or `Ctrl+,` (Windows/Linux)
+2. Search for "auto save"
+3. Set **"Files: Auto Save"** to `afterDelay` or `onFocusChange`
+
+This way, your tests will automatically rerun when you stop typing, making development much faster!
+
+<details>
+<summary>📦 <strong>Pre-configured Extensions for This Course</strong></summary>
+
+When you open this project in VS Code, you'll be prompted to install:
+
+- **ESLint** - Code quality and error checking
+- **Prettier** - Automatic code formatting
+- **Jest Runner** - Run individual tests with one click
+- **Jest** - IntelliSense for Jest tests
+- **Pretty TypeScript Errors** - Better error messages
+- **npm IntelliSense** - Auto-complete for npm modules
+
+All these extensions are configured in `.vscode/extensions.json` and will make your learning experience much smoother.
+
+</details>
+
+**Can I use other editors?**
+
+Yes, you can use WebStorm, Sublime, Vim, or any editor you prefer. The code will work fine, but you'll need to configure:
+- ESLint integration manually
+- Prettier formatting manually
+- Debugger setup manually
+- Jest test runner manually
+
+## 🚀 Step-by-Step Instructions
+
+### Step 1: Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd js-training
 ```
 
-### Крок 2: Встановлення залежностей
+### Step 2: Install Dependencies
 
 ```bash
 npm install
 ```
 
-Це встановить всі необхідні пакети (Jest, TypeScript, React, Express тощо).
+This will install all required packages (Jest, TypeScript, React, Express, etc.).
 
-### Крок 3: Початкове налаштування
+### Step 3: Verify Your Setup
+
+**Check Node.js and npm installation:**
 
 ```bash
-npm run setup
+node -v
+npm -v
 ```
 
-Цей скрипт:
-- Перевірить Node.js та npm
-- Перевірить Git конфігурацію
-- Запустить тестові перевірки
+✅ Expected: Node.js v22.x.x and npm v10.x.x (or higher)
+❌ If not installed: See Prerequisites section above
 
-### Крок 4: Налаштування Git (якщо потрібно)
+<details>
+<summary><strong>📋 Optional: Manual Environment Checklist</strong></summary>
 
-Якщо Git ще не налаштований:
+If you want to verify everything manually:
+
+**1. Verify Node.js installation**
 
 ```bash
-git config --global user.name "Ваше Імя"
+node -v
+```
+
+✅ Expected: Should show version (e.g., `v22.x.x`)
+❌ If not installed: Install via nvm or download from [nodejs.org](https://nodejs.org/)
+
+---
+
+**2. Verify npm installation**
+
+```bash
+npm -v
+```
+
+✅ Expected: Should show version (e.g., `10.x.x`)
+❌ If not installed: Comes with Node.js, reinstall Node.js
+
+---
+
+**3. Verify Git installation**
+
+```bash
+git --version
+```
+
+✅ Expected: Should show version (e.g., `git version 2.39.0`)
+❌ If not installed: Download from [git-scm.com](https://git-scm.com/)
+
+---
+
+**4. Check Git configuration**
+
+```bash
+git config user.name
+git config user.email
+```
+
+✅ Expected: Should show your name and email
+❌ If empty: Configure Git (see Step 4 below)
+
+---
+
+**5. Check if dependencies are installed**
+
+```bash
+ls node_modules
+```
+
+If folder doesn't exist or is empty:
+
+```bash
+npm install
+```
+
+✅ Expected: Should complete without errors
+❌ If errors occur: Try `npm cache clean --force` and run again
+
+---
+
+**6. Optional: Run a quick test**
+
+```bash
+npm test -- --testPathPattern=01-variables --silent
+```
+
+✅ Expected: Should show test results (failures are OK at this point!)
+❌ If command fails: Run `npm install` first
+
+</details>
+
+### Step 4: Configure Git (if needed)
+
+If Git is not yet configured:
+
+```bash
+git config --global user.name "Your Name"
 git config --global user.email "your.email@example.com"
 ```
 
-### Крок 5: Створення власної гілки
+### Step 5: Create Your Own Branch
+
+Create a separate branch for your work:
 
 ```bash
-npm run create-branch ivan
+git checkout -b student/ivan
 ```
 
-Замініть `ivan` на ваше імя. Це створить гілку `student/ivan` де ви будете працювати.
+Replace `ivan` with your name. This will create a `student/ivan` branch where you'll work.
 
-## 📖 Як працювати з модулем
+**Useful git commands:**
+```bash
+# Check current branch
+git branch
 
-### Приклад: Модуль "Variables"
+# Switch to another branch
+git checkout <branch-name>
 
-#### 1. Перейдіть до модуля
+# View all branches
+git branch -a
+```
+
+💡 **More about Git:** [Git Branching](https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell)
+
+## 📖 How to Work with a Module
+
+### Example: "Variables" Module
+
+#### 1. Navigate to the Module
 
 ```bash
 cd modules/01-javascript-basics/01-variables
 ```
 
-#### 2. Прочитайте README
+#### 2. Read the README
 
 ```bash
 cat README.md
-# або відкрийте в редакторі
+# or open in editor
 code README.md
 ```
 
-README містить:
-- Теоретичний матеріал
-- Цілі навчання
-- Список тем
-- Інструкції
+README contains:
+- Theoretical material
+- Learning objectives
+- Topic list
+- Instructions
 
-#### 3. Вивчіть приклади
+#### 3. Study the Examples
 
 ```bash
 ls examples/
@@ -108,19 +264,19 @@ node examples/let-const.js
 node examples/var-hoisting.js
 ```
 
-Приклади містять:
-- Робочий код
-- Детальні коментарі
-- Console.log для демонстрації результатів
+Examples contain:
+- Working code
+- Detailed comments
+- Console.log for result demonstration
 
-**Поради:**
-- Змінюйте код в прикладах
-- Експериментуйте
-- Дивіться що відбувається
+**Tips:**
+- Modify code in examples
+- Experiment
+- See what happens
 
-#### 4. Виконайте вправи
+#### 4. Complete the Exercises
 
-Відкрийте `exercises/variables.js`:
+Open `exercises/variables.js`:
 
 ```javascript
 /**
@@ -133,107 +289,101 @@ function greet(name) {
 }
 ```
 
-**Ваша задача:**
-- Прочитайте JSDoc коментар
-- Напишіть код
-- Дотримуйтесь вимог
+**Your task:**
+- Read the JSDoc comment
+- Write the code
+- Follow the requirements
 
-#### 5. Запустіть тести
+#### 5. Run Tests
 
 ```bash
-# З кореневої папки проекту
+# From project root folder
 npm test -- 01-variables
 ```
 
-Тести покажуть:
-- ✓ Які тести пройшли
-- ✗ Які тести провалились
-- Чіткі повідомлення про помилки
+Tests will show:
+- ✓ Which tests passed
+- ✗ Which tests failed
+- Clear error messages
 
-#### 6. Виправте помилки
+#### 6. Fix Errors
 
-Якщо тести не пройшли:
-1. Прочитайте повідомлення про помилку
-2. Подивіться на test file в `__tests__/`
-3. Зрозумійте що очікується
-4. Виправте код
-5. Запустіть тести знову
+If tests fail:
+1. Read the error message
+2. Look at the test file in `__tests__/`
+3. Understand what's expected
+4. Fix the code
+5. Run tests again
 
-#### 7. Збережіть прогрес
+#### 7. Save Progress
 
-Коли всі тести пройдуть:
+When all tests pass:
 
 ```bash
 git add exercises/variables.js
 git commit -m "Completed 01-variables module"
 ```
 
-#### 8. Перевірте загальний прогрес
-
-```bash
-npm run check-progress
-```
-
-## 🎯 Робочий цикл (Workflow)
+## 🎯 Workflow
 
 ```
 ┌─────────────────────────────────────┐
-│  1. Читати README модуля            │
+│  1. Read module README              │
 └──────────────┬──────────────────────┘
                │
                ▼
 ┌─────────────────────────────────────┐
-│  2. Запустити examples/             │
+│  2. Run examples/                   │
 └──────────────┬──────────────────────┘
                │
                ▼
 ┌─────────────────────────────────────┐
-│  3. Написати код в exercises/       │
+│  3. Write code in exercises/        │
 └──────────────┬──────────────────────┘
                │
                ▼
 ┌─────────────────────────────────────┐
-│  4. Запустити тести                 │
+│  4. Run tests                       │
 └──────────────┬──────────────────────┘
                │
          ┌─────┴─────┐
          │           │
-    Провалились   Пройшли
+      Failed      Passed
          │           │
          ▼           ▼
-    Виправити   Закомітити
+       Fix       Commit
          │           │
          └─────┬─────┘
                │
                ▼
 ┌─────────────────────────────────────┐
-│  Наступний модуль                   │
+│  Next module                        │
 └─────────────────────────────────────┘
 ```
 
-## 🧪 Робота з тестами
+## 🧪 Working with Tests
 
-### Запуск тестів
+### Running Tests
 
 ```bash
-# Всі тести
+# All tests
 npm test
 
-# Конкретний модуль
+# Specific module
 npm test -- 01-variables
 npm test -- functions
 
-# Watch mode (авто-перезапуск)
+# Watch mode (auto-restart)
 npm test -- --watch
 
-# Детальний вивід
+# Verbose output
 npm test -- --verbose
 
-# Покриття коду
+# Code coverage
 npm run test:coverage
 ```
 
-### Розуміння виводу тестів
+### Understanding Test Output
 
 ```
 PASS  modules/01-javascript-basics/01-variables/__tests__/variables.test.js
@@ -259,93 +409,109 @@ PASS  modules/01-javascript-basics/01-variables/__tests__/variables.test.js
       16 | });
 ```
 
-**Що це означає:**
-- ✓ Тест пройшов
-- ✗ Тест провалився
-- `Expected: 5` - що очікувалось
-- `Received: undefined` - що отримано
-- Рядок 14 - де помилка
+**What this means:**
+- ✓ Test passed
+- ✗ Test failed
+- `Expected: 5` - what was expected
+- `Received: undefined` - what was received
+- Line 14 - where the error occurred
 
-## 💡 Поради та трюки
+## 💡 Tips and Tricks
 
-### 1. Використовуйте Watch Mode під час розробки
+### 1. Enable Auto Save in VS Code
+
+Auto-save is a game-changer when working with tests in watch mode!
+
+**How to enable:**
+1. `Cmd+,` (macOS) or `Ctrl+,` (Windows/Linux) to open settings
+2. Search for "auto save"
+3. Choose your preferred mode:
+   - **`afterDelay`** - Saves automatically after you stop typing (recommended)
+   - **`onFocusChange`** - Saves when you click outside the editor
+   - **`onWindowChange`** - Saves when you switch to another app
+
+**Why it's useful:**
+- Works perfectly with Jest watch mode
+- No need to press `Cmd+S` / `Ctrl+S` constantly
+- Tests rerun automatically as you code
+- Prevents forgetting to save before testing
+
+### 2. Use Watch Mode During Development
 
 ```bash
 npm test -- --watch
 ```
 
-Тести автоматично перезапускаються при збереженні файлів.
+Tests automatically restart when files are saved. Combine with auto-save for the ultimate development experience!
 
-### 2. Дивіться на тести як на специфікацію
+### 2. Look at Tests as Specification
 
-Файли в `__tests__/` показують що саме очікується від вашого коду.
+Files in `__tests__/` show exactly what's expected from your code.
 
-### 3. Експериментуйте з прикладами
+### 3. Experiment with Examples
 
-Змінюйте код в `examples/`, додавайте свої `console.log()`, ламайте та виправляйте.
+Modify code in `examples/`, add your own `console.log()`, break and fix.
 
-### 4. Комітьте часто
+### 4. Commit Often
 
-Закоммічуйте після кожного виконаного модуля. Це дозволяє:
-- Відстежувати прогрес
-- Повертатися до попередніх версій
-- Бачити історію навчання
+Commit after each completed module. This allows you to:
+- Track progress
+- Return to previous versions
+- See learning history
 
-### 5. Не копіюйте код сліпо
+### 5. Don't Copy Code Blindly
 
-Розумійте кожен рядок коду який ви пишете. Якщо щось незрозуміло - погуглите або запитайте викладача.
+Understand every line of code you write. If something is unclear - google it or ask your instructor.
 
-### 6. Використовуйте debugger
+### 6. Use the Debugger
 
 ```javascript
 function myFunction(x) {
-  debugger; // Виконання зупиниться тут
+  debugger; // Execution will stop here
   return x * 2;
 }
 ```
 
-Запустіть з Node.js debugger:
+Run with Node.js debugger:
 ```bash
 node inspect examples/my-file.js
 ```
 
-## 🐛 Типові проблеми
+## 🐛 Common Issues
 
-### Проблема: Тести не запускаються
+### Issue: Tests Don't Run
 
-**Рішення:**
+**Solution:**
 ```bash
-# Перевстановити залежності
+# Reinstall dependencies
 rm -rf node_modules package-lock.json
 npm install
 ```
 
-### Проблема: "Cannot find module"
+### Issue: "Cannot find module"
 
-**Рішення:**
-- Перевірте що ви в кореневій папці проекту
-- Запустіть `npm install`
-- Перевірте шлях до модуля
+**Solution:**
+- Check that you're in the project root folder
+- Run `npm install`
+- Check the module path
 
-### Проблема: Git команди не працюють
+### Issue: Git Commands Don't Work
 
-**Рішення:**
+**Solution:**
 ```bash
-# Налаштуйте Git
+# Configure Git
 git config --global user.name "Your Name"
 git config --global user.email "your@email.com"
 ```
 
-### Проблема: Тести проходять локально, але не проходять
+### Issue: Tests Pass Locally but Fail in CI
 
- в CI
+**Solution:**
+- Make sure you've committed all changes
+- Check that you're not using absolute paths
+- Run `npm run lint` before committing
 
-**Рішення:**
-- Переконайтеся що закомітили всі зміни
-- Перевірте що не використовуєте абсолютні шляхи
-- Запустіть `npm run lint` перед коммітом
-
-## 📚 Додаткові ресурси
+## 📚 Additional Resources
 
 ### JavaScript
 - [MDN JavaScript Guide](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide)
@@ -368,32 +534,32 @@ git config --global user.email "your@email.com"
 - [Node.js Documentation](https://nodejs.org/docs/)
 - [Express.js Guide](https://expressjs.com/en/guide/routing.html)
 
-## 🆘 Отримання допомоги
+## 🆘 Getting Help
 
-1. **Документація** - Перевірте README модуля
-2. **Приклади** - Подивіться на робочий код в examples/
-3. **Тести** - Прочитайте тести щоб зрозуміти вимоги
-4. **Google** - Шукайте помилки та концепції
-5. **Викладач** - Запитайте якщо застрягли
+1. **Documentation** - Check the module README
+2. **Examples** - Look at working code in examples/
+3. **Tests** - Read tests to understand requirements
+4. **Google** - Search for errors and concepts
+5. **Instructor** - Ask if you're stuck
 
-## ✅ Чеклист перед початком
+## ✅ Checklist Before Starting
 
-- [ ] Node.js встановлено
-- [ ] npm встановлено
-- [ ] Git встановлено та налаштовано
-- [ ] Редактор коду встановлено
-- [ ] `npm install` виконано успішно
-- [ ] `npm run setup` виконано без помилок
-- [ ] Власна гілка створена
-- [ ] Прочитано цей посібник повністю
+- [ ] Node.js installed
+- [ ] npm installed
+- [ ] Git installed and configured
+- [ ] Code editor installed
+- [ ] `npm install` completed successfully
+- [ ] `npm run setup` completed without errors
+- [ ] Personal branch created
+- [ ] Read this guide completely
 
 ---
 
-**Готові почати? Перейдіть до першого модуля:**
+**Ready to start? Navigate to the first module:**
 
 ```bash
 cd modules/01-javascript-basics/01-variables
 cat README.md
 ```
 
-**Успіхів у навчанні! 🚀**
+**Good luck with your learning! 🚀**
