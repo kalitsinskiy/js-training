@@ -1,49 +1,52 @@
 # 🚀 Fullstack JavaScript/TypeScript Training
 
-Welcome to hands-on fullstack development training! Learn JavaScript, TypeScript, Node.js Backend, and React Frontend through practical examples and test-driven exercises.
+Welcome to hands-on fullstack development training! Learn JavaScript, TypeScript, Node.js Backend, and React Frontend through practical examples and weekly evaluations.
 
 ## 🎯 What You'll Learn
 
-This course includes **21 practical modules** across 4 areas:
+This course is organized by **weekly topics** - complete one topic per week:
 
-- **JavaScript Basics** (7 modules) - Variables, functions, arrays, objects, control flow, async programming
-- **TypeScript** (4 modules) - Types, interfaces, typed functions, classes
-- **Node.js Backend** (5 modules) - Server development, Express, REST APIs, databases
-- **React Frontend** (5 modules) - Components, state management, hooks, forms
+- **JavaScript Basics** (7 weeks) - Variables, data types, functions, arrays, objects, control flow, async
+- **TypeScript** (4 weeks) - Coming soon
+- **Tests** - Coming soon
+- **Backend Projects** - Coming soon
+- **Frontend Projects** - Coming soon
 
 <details>
 <summary>📋 <strong>View Complete Course Structure</strong></summary>
 
-### 1. JavaScript Basics (7 modules)
-- **01-variables** - `let`, `const`, `var`, hoisting, scope
-- **02-data-types** - Primitives, type conversion, `typeof`
-- **03-functions** - Declarations, expressions, arrow functions, higher-order
-- **04-arrays** - Array methods, iteration, `map/filter/reduce`
-- **05-objects** - Literals, methods, destructuring, spread
-- **06-control-flow** - `if/else`, `switch`, ternary operator, loops
-- **07-async-javascript** - Callbacks, promises, `async/await`
+### 1. JavaScript Basics (7 weeks)
+- **Week 1: Variables** (`01-variables`) - `let`, `const`, `var`, hoisting, scope
+- **Week 2: Data Types** (`02-data-types`) - Primitives, type conversion, `typeof`, truthy/falsy
+- **Week 3: Functions** (`03-functions`) - Declarations, expressions, arrow functions, higher-order, callbacks
+- **Week 4: Arrays** (`04-arrays`) - Array methods, `map/filter/reduce`, iteration
+- **Week 5: Objects** (`05-objects`) - Literals, methods, destructuring, spread operator
+- **Week 6: Control Flow** (`06-control-flow`) - `if/else`, `switch`, ternary, loops
+- **Week 7: Async** (`07-async`) - Callbacks, promises, `async/await`, error handling
 
-### 2. TypeScript Basics (4 modules)
-- **01-types** - Basic types, type annotations, type inference
-- **02-interfaces** - Object types, optional properties, readonly
-- **03-functions** - Typed parameters, return types, overloads
-- **04-classes** - Class syntax, access modifiers, inheritance
+### 2. TypeScript Basics (4 weeks)
+_Coming soon - folders created but content pending_
 
-### 3. Node.js Backend (5 modules)
-- **01-node-basics** - Modules, require, exports, process
-- **02-file-system** - fs module, read/write, async operations
-- **03-express-basics** - Creating server, routing, middleware
-- **04-rest-api** - CRUD operations, JSON, HTTP methods
-- **05-database** - Simple JSON database, CRUD with files
+### 3. Tests
+_Coming soon - separate section for testing concepts_
 
-### 4. React Frontend (5 modules)
-- **01-jsx-basics** - JSX syntax, components, props
-- **02-components** - Functional components, composition
-- **03-state** - useState, state management basics
-- **04-hooks** - useEffect, useContext, custom hooks
-- **05-forms-events** - Form handling, event listeners, controlled inputs
+### 4. Backend Projects
+_Coming soon - practical Node.js/Express projects_
+
+### 5. Frontend Projects
+_Coming soon - practical React projects_
 
 </details>
+
+## 📊 Weekly Evaluation Format
+
+Each week includes:
+- **Study materials**: README, examples, exercises
+- **Evaluation**: 10 questions per topic (see `QUESTIONS.md`)
+- **Format**: 5 students, each gets 2 random questions
+- **Requirement**: Must complete previous week before starting next
+
+**Important:** Prepare answers for ALL 10 questions - you won't know which 2 you'll get!
 
 ## 🚀 Getting Started
 
@@ -118,28 +121,27 @@ Create your own branch to keep your work separate and safe.
 git checkout -b student/<your-name>
 ```
 
-Example: `git checkout -b student/john`
-
-💡 New to Git? See [Git Branching Basics](https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging)
-
 ✅ **You're ready to start learning!**
 
 ---
 
 ## 📚 Your Learning Workflow
 
-This is your step-by-step process for each module:
+This is your step-by-step process for each weekly topic:
 
 ### Step 1: Read the Theory
 
-Navigate to a module and read its README:
+Navigate to a topic and read its README:
 
 ```bash
-cd modules/01-javascript-basics/01-variables
+cd src/1-javascript/01-variables
 cat README.md
 ```
 
-Each module README contains concepts, examples, and learning objectives.
+Each README contains:
+- Quick overview of concepts
+- Key topics explained
+- Links to external resources (MDN, JavaScript.info)
 
 ### Step 2: Study the Examples
 
@@ -148,7 +150,10 @@ Run working examples to see concepts in action:
 ```bash
 node examples/let-const.js
 node examples/scope.js
+node examples/var-hoisting.js
 ```
+
+Examples show real code with output - experiment with them!
 
 **Need help running scripts?** → **[Running Scripts Guide](docs/RUNNING_SCRIPTS.md)**
 
@@ -160,49 +165,46 @@ Open exercise files in your editor and write code:
 code exercises/variables.js
 ```
 
-You can choose your learning approach:
-- **Test-Driven:** Run tests first, then write code to make them pass
-- **Example-Based:** Study examples, write code, then verify with tests
+Exercises have TODOs for you to complete. Run them to test your solutions.
 
-### Step 4: Test Your Solution
+### Step 4: Prepare for Evaluation
 
-Run tests for the module (from project root):
+Read the `QUESTIONS.md` file:
 
 ```bash
-cd ../../..  # Navigate back to project root
-npm test -- 01-variables
+cat QUESTIONS.md
 ```
 
-**Pro tip:** Use watch mode for automatic test reruns when you save:
-
-```bash
-npm test -- --watch 01-variables
-```
+- Study ALL 10 questions
+- Prepare answers with code examples
+- You'll get 2 random questions during evaluation
 
 ### Step 5: Commit Your Progress
 
 Save your completed work:
 
 ```bash
+cd ../../..  # Back to project root
 git add .
-git commit -m "Completed 01-variables"
+git commit -m "Completed Week 1: Variables"
 ```
 
-### Step 6: Move to Next Module
+### Step 6: Move to Next Week
 
-Repeat steps 1-6 for the next module. Modules are designed to be completed in order!
+**Important:** Complete the current week's evaluation before starting the next topic. Topics build on each other!
 
 ---
 
 ## 🛠 Quick Command Reference
 
-**Testing:**
+**Running Examples:**
 ```bash
-npm test                    # Run all tests
-npm test -- 01-variables    # Test specific module
-npm test -- --watch         # Watch mode (auto-rerun)
-npm run test:coverage       # Coverage report
+node src/1-javascript/01-variables/examples/let-const.js
+node src/1-javascript/02-data-types/examples/primitives.js
 ```
+
+**Testing:**
+_Tests will be added in a separate section later_
 
 **Code Quality:**
 ```bash
@@ -232,12 +234,13 @@ npm run type-check          # TypeScript validation
 
 ## 💡 Learning Tips
 
-1. **Follow the order** - Modules build on previous concepts
-2. **Experiment freely** - Modify examples to see what happens
-3. **Use tests as specs** - They show exactly what's expected
-4. **Commit often** - Save progress after each module
-5. **Don't rush** - Understanding beats speed every time
-6. **Review when stuck** - Return to theory and examples
+1. **One week, one topic** - Complete topics in order, each builds on the last
+2. **Study ALL 10 questions** - You'll get 2 random questions in evaluation
+3. **Run examples** - Don't just read, execute and modify code
+4. **Complete exercises** - Practice makes perfect
+5. **Prepare code examples** - Be ready to write code during evaluation
+6. **Review before evaluation** - Go through examples and exercises again
+7. **Don't skip topics** - Sequential completion is mandatory
 
 ---
 

@@ -4,7 +4,7 @@ module.exports = {
 
   // Test match patterns - look for test files in __tests__ directories
   testMatch: [
-    '<rootDir>/modules/**/__tests__/**/*.test.{js,ts,jsx,tsx}',
+    '<rootDir>/src/**/__tests__/**/*.test.{js,ts,jsx,tsx}',
   ],
 
   // Transform files with babel-jest and ts-jest
@@ -39,9 +39,10 @@ module.exports = {
       displayName: 'node',
       testEnvironment: 'node',
       testMatch: [
-        '<rootDir>/modules/01-javascript-basics/**/__tests__/**/*.test.{js,ts}',
-        '<rootDir>/modules/02-typescript-basics/**/__tests__/**/*.test.{js,ts}',
-        '<rootDir>/modules/03-nodejs-backend/**/__tests__/**/*.test.{js,ts}',
+        '<rootDir>/src/1-javascript/**/__tests__/**/*.test.{js,ts}',
+        '<rootDir>/src/2-typescript/**/__tests__/**/*.test.{js,ts}',
+        '<rootDir>/src/3-tests/**/__tests__/**/*.test.{js,ts}',
+        '<rootDir>/src/4-backend/**/__tests__/**/*.test.{js,ts}',
       ],
       transform: {
         '^.+\\.(js|jsx)$': ['babel-jest', { configFile: './config/.babelrc' }],
@@ -54,7 +55,7 @@ module.exports = {
       displayName: 'jsdom',
       testEnvironment: 'jsdom',
       testMatch: [
-        '<rootDir>/modules/04-react-frontend/**/__tests__/**/*.test.{js,jsx,ts,tsx}',
+        '<rootDir>/src/5-frontend/**/__tests__/**/*.test.{js,jsx,ts,tsx}',
       ],
       transform: {
         '^.+\\.(js|jsx)$': ['babel-jest', { configFile: './config/.babelrc' }],
@@ -72,9 +73,9 @@ module.exports = {
 
   // Coverage configuration
   collectCoverageFrom: [
-    'modules/**/exercises/**/*.{js,ts,jsx,tsx}',
-    '!modules/**/examples/**',
-    '!modules/**/__tests__/**',
+    'src/**/exercises/**/*.{js,ts,jsx,tsx}',
+    '!src/**/examples/**',
+    '!src/**/__tests__/**',
     '!**/node_modules/**',
   ],
 
