@@ -1,13 +1,11 @@
 # 🚀 Fullstack JavaScript/TypeScript Training
 
-Welcome to hands-on fullstack development training! Learn JavaScript, TypeScript, Node.js Backend, and React Frontend through practical examples and weekly evaluations.
+Welcome to hands-on fullstack development training! Learn JavaScript, TypeScript, Node.js Backend, and React Frontend through practical examples.
 
 ## 🎯 What You'll Learn
 
-This course is organized by **weekly topics** - complete one topic per week:
-
-- **JavaScript Basics** (7 weeks) - Variables, data types, functions, arrays, objects, control flow, async
-- **TypeScript** (4 weeks) - Coming soon
+- **JavaScript Basics** - Variables, data types, functions, arrays, objects, control flow, async, strings, error handling, classes, closures, JSON & modules
+- **TypeScript** - Coming soon
 - **Tests** - Coming soon
 - **Backend Projects** - Coming soon
 - **Frontend Projects** - Coming soon
@@ -15,16 +13,21 @@ This course is organized by **weekly topics** - complete one topic per week:
 <details>
 <summary>📋 <strong>View Complete Course Structure</strong></summary>
 
-### 1. JavaScript Basics (7 weeks)
-- **Week 1: Variables** (`01-variables`) - `let`, `const`, `var`, hoisting, scope
-- **Week 2: Data Types** (`02-data-types`) - Primitives, type conversion, `typeof`, truthy/falsy
-- **Week 3: Functions** (`03-functions`) - Declarations, expressions, arrow functions, higher-order, callbacks
-- **Week 4: Arrays** (`04-arrays`) - Array methods, `map/filter/reduce`, iteration
-- **Week 5: Objects** (`05-objects`) - Literals, methods, destructuring, spread operator
-- **Week 6: Control Flow** (`06-control-flow`) - `if/else`, `switch`, ternary, loops
-- **Week 7: Async** (`07-async`) - Callbacks, promises, `async/await`, error handling
+### 1. JavaScript Basics (12 weeks)
+- **Variables** (`01-variables`) - `let`, `const`, `var`, hoisting, scope
+- **Data Types** (`02-data-types`) - Primitives, type conversion, `typeof`, truthy/falsy
+- **Control Flow** (`03-control-flow`) - `if/else`, `switch`, ternary, loops
+- **Strings** (`04-strings`) - String methods, template literals, search, transform
+- **Functions** (`05-functions`) - Declarations, expressions, arrow functions, higher-order, callbacks
+- **Arrays** (`06-arrays`) - Array methods, `map/filter/reduce`, iteration
+- **Objects** (`07-objects`) - Literals, methods, destructuring, spread operator
+- **Error Handling** (`08-error-handling`) - `try/catch/finally`, custom errors, error types
+- **Classes** (`09-classes`) - `class`, inheritance, static, private fields, `instanceof`
+- **Closures** (`10-closures`) - Lexical scope, factory functions, memoization, module pattern
+- **Async** (`11-async`) - Callbacks, promises, `async/await`, error handling
+- **JSON & Modules** (`12-json-modules`) - `JSON.parse/stringify`, `import/export`, CommonJS vs ESM
 
-### 2. TypeScript Basics (4 weeks)
+### 2. TypeScript Basics
 _Coming soon - folders created but content pending_
 
 ### 3. Tests
@@ -38,13 +41,13 @@ _Coming soon - practical React projects_
 
 </details>
 
-## 📊 Weekly Evaluation Format
+## 📊 Evaluation Format
 
-Each week includes:
+Each block includes:
 - **Study materials**: README, examples, exercises
 - **Evaluation**: 10 questions per topic (see `QUESTIONS.md`)
 - **Format**: 5 students, each gets 2 random questions
-- **Requirement**: Must complete previous week before starting next
+- **Requirement**: Must complete previous block before starting next
 
 **Important:** Prepare answers for ALL 10 questions - you won't know which 2 you'll get!
 
@@ -127,7 +130,7 @@ git checkout -b student/<your-name>
 
 ## 📚 Your Learning Workflow
 
-This is your step-by-step process for each weekly topic:
+This is your step-by-step process for each block topic:
 
 ### Step 1: Read the Theory
 
@@ -186,12 +189,12 @@ Save your completed work:
 ```bash
 cd ../../..  # Back to project root
 git add .
-git commit -m "Completed Week 1: Variables"
+git commit -m "Completed block 1: Variables"
 ```
 
-### Step 6: Move to Next Week
+### Step 6: Move to Next Block
 
-**Important:** Complete the current week's evaluation before starting the next topic. Topics build on each other!
+**Important:** Complete the current block's evaluation before starting the next topic. Topics build on each other!
 
 ---
 
@@ -200,11 +203,8 @@ git commit -m "Completed Week 1: Variables"
 **Running Examples:**
 ```bash
 node src/1-javascript/01-variables/examples/let-const.js
-node src/1-javascript/02-data-types/examples/primitives.js
+node src/1-javascript/03-control-flow/examples/conditionals.js
 ```
-
-**Testing:**
-_Tests will be added in a separate section later_
 
 **Code Quality:**
 ```bash
@@ -234,7 +234,7 @@ npm run type-check          # TypeScript validation
 
 ## 💡 Learning Tips
 
-1. **One week, one topic** - Complete topics in order, each builds on the last
+1. **One block, one topic** - Complete topics in order, each builds on the last
 2. **Study ALL 10 questions** - You'll get 2 random questions in evaluation
 3. **Run examples** - Don't just read, execute and modify code
 4. **Complete exercises** - Practice makes perfect

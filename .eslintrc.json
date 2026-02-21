@@ -17,8 +17,7 @@
       "jsx": true
     },
     "ecmaVersion": 2021,
-    "sourceType": "module",
-    "project": "./config/tsconfig.json"
+    "sourceType": "module"
   },
   "plugins": [
     "react",
@@ -41,6 +40,14 @@
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "off"
   },
+  "overrides": [
+    {
+      "files": ["src/2-typescript/**/*.ts", "src/5-frontend/**/*.tsx", "src/5-frontend/**/*.ts"],
+      "parserOptions": {
+        "project": "./config/tsconfig.json"
+      }
+    }
+  ],
   "settings": {
     "react": {
       "version": "detect"

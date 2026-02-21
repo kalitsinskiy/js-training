@@ -50,7 +50,11 @@
   },
   "include": [
     "../modules/**/*",
-    "../scripts/**/*"
+    "../scripts/**/*",
+    "../src/2-typescript/**/*",
+    "../src/3-tests/**/*",
+    "../src/4-backend/**/*",
+    "../src/5-frontend/**/*"
   ],
   "exclude": [
     "../node_modules",
