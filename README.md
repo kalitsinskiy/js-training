@@ -13,7 +13,7 @@ Welcome to hands-on fullstack development training! Learn JavaScript, TypeScript
 <details>
 <summary>📋 <strong>View Complete Course Structure</strong></summary>
 
-### 1. JavaScript Basics (12 weeks)
+### 1. JavaScript Basics
 - **Variables** (`01-variables`) - `let`, `const`, `var`, hoisting, scope
 - **Data Types** (`02-data-types`) - Primitives, type conversion, `typeof`, truthy/falsy
 - **Control Flow** (`03-control-flow`) - `if/else`, `switch`, ternary, loops
