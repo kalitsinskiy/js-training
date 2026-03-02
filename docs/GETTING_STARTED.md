@@ -465,17 +465,9 @@ Understand every line of code you write. If something is unclear - google it or 
 
 ### 6. Use the Debugger
 
-```javascript
-function myFunction(x) {
-  debugger; // Execution will stop here
-  return x * 2;
-}
-```
+This project is pre-configured with VS Code debug profiles. Set a breakpoint, press `F5`, and step through your code visually.
 
-Run with Node.js debugger:
-```bash
-node inspect examples/my-file.js
-```
+→ **[Full Debugging Guide](DEBUGGING.md)**
 
 ## 🐛 Common Issues
 
