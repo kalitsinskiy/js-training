@@ -45,8 +45,7 @@ _Coming soon - practical React projects_
 
 Each block includes:
 - **Study materials**: README, examples, exercises
-- **Evaluation**: 10 questions per topic (see `QUESTIONS.md`)
-- **Format**: 5 students, each gets 2 random questions
+- **Evaluation**: Control questions per topic
 - **Requirement**: Must complete previous block before starting next
 
 **Important:** Prepare answers for ALL 10 questions - you won't know which 2 you'll get!
