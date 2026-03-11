@@ -11,7 +11,10 @@ console.log('=== Exercise 1: Basic methods ===');
 // - the word "World" extracted with slice()
 const greeting = 'Hello, World!';
 // Your code here:
-
+console.log(`Length: ${greeting.length}`);
+console.log(`First: ${greeting[0]}, Last: ${greeting.at(-1)}`);
+const sliced = greeting.slice(7,greeting.length - 1);
+console.log(`Sliced: ${sliced}`);
 
 console.log('\n=== Exercise 2: Search ===');
 // TODO: Check if the email is valid by verifying:
@@ -20,14 +23,25 @@ console.log('\n=== Exercise 2: Search ===');
 // - log true/false
 const email = 'user@example.com';
 // Your code here:
-
+console.log(`Includes @: ${email.includes('@')}`);
+console.log(`Ens with '.com' or '.org': ${email.endsWith('.com') || email.endsWith('.org')}`);
 
 console.log('\n=== Exercise 3: Transform ===');
 // TODO: Transform "  hello world  " to "Hello World"
 // Steps: trim → split by space → capitalize each word → join
 const messy = '  hello world  ';
 // Your code here:
+const clean =
+messy
+  .trim()
+  .split(' ')
+  .map(val => {
+    const chars = val.split('');
+    return val[0].toLocaleUpperCase() + chars.slice(1).join('');
+  })
+  .join(' ');
 
+console.log(`Messy: <${messy}>; Clean: <${clean}>`);
 
 console.log('\n=== Exercise 4: Template literal ===');
 // TODO: Build a greeting card using template literal
@@ -36,14 +50,16 @@ const recipient = 'Alice';
 const occasion = 'Birthday';
 const sender = 'Bob';
 // Your code here:
-
+console.log(`Dear ${recipient}, Happy ${occasion}! Best wishes, ${sender}`);
 
 console.log('\n=== Exercise 5: Replace ===');
 // TODO: Replace ALL occurrences of "foo" (any case) with "bar"
 const text = 'Foo is foo. FOO is also foo!';
 // Hint: use replaceAll() or replace() with regex /foo/gi
 // Your code here:
-
+const replacedText = text.replaceAll(/foo/gi, 'bar');
+console.log(`Before: ${text}`);
+console.log(`After: ${replacedText}`);
 
 console.log('\n=== Exercise 6: Split and join ===');
 // TODO: Convert this comma-separated string to an array,
@@ -51,15 +67,21 @@ console.log('\n=== Exercise 6: Split and join ===');
 const fruits = 'apple,banana,cherry,orange';
 // Expected: 'orange | cherry | banana | apple'
 // Your code here:
-
+console.log(fruits.split(',').reverse().join(' | '));
 
 console.log('\n=== Exercise 7: Padding ===');
 // TODO: Format these numbers as prices with padStart
 // Each number should be right-aligned in a field of 8 chars, prefixed with '$'
-const prices = [9.99, 150.00, 2500.50];
+const prices = [9.99, 150.00, 2500.50, 2500.55];
 // Expected output like: "  $ 9.99", "$ 150.00", "$2500.50"
 // Your code here:
-
+const formattedPrices = prices.map(val => {
+  const str = String(val);
+  const priceStr = str.length < 7 ? `$ ${str}` : `$${str}`;
+  return priceStr.padStart(8)
+});
+console.log(`Before: ${prices}`);
+console.log(`After: ${formattedPrices}`);
 
 console.log('\n=== Exercise 8: Palindrome check ===');
 // TODO: Write a function that checks if a string is a palindrome
@@ -67,11 +89,14 @@ console.log('\n=== Exercise 8: Palindrome check ===');
 // isPalindrome("race a car") → false
 // isPalindrome("A man a plan a canal Panama") → true
 function isPalindrome(str) {
-  // Your code here
+  const lowerNoSpaces = str.toLocaleLowerCase().replaceAll(/\s/g, '');
+  const reversed = lowerNoSpaces.split('').reverse().join('');
+  return lowerNoSpaces === reversed;
 }
-// console.log(isPalindrome('racecar'));  // true
-// console.log(isPalindrome('hello'));    // false
-
+console.log(isPalindrome('racecar'));  // true
+console.log(isPalindrome('hello'));    // false
+console.log(isPalindrome("race a car")) // false
+console.log(isPalindrome("A man a plan a canal Panama"));// true
 
 console.log('\n=== 🎯 Challenge: Truncate text ===');
 // TODO: Create a function that truncates text to maxLength characters
@@ -79,19 +104,28 @@ console.log('\n=== 🎯 Challenge: Truncate text ===');
 // truncate("Hello World", 8) → "Hello..."
 // truncate("Hi", 8) → "Hi"
 function truncate(str, maxLength) {
-  // Your code here
+  const appender = '...';
+
+  if (str.length <= maxLength) return str;
+
+  return str.slice(0, maxLength - appender.length) + appender;
 }
-// console.log(truncate('Hello, World!', 8)); // 'Hello...'
-// console.log(truncate('Hi', 8));             // 'Hi'
+console.log(truncate('Hello, World!', 8)); // 'Hello...'
+console.log(truncate('Hi', 8));             // 'Hi'
 
 
 console.log('\n=== 🎯 Challenge: Count words ===');
 // TODO: Create a function that counts word frequency in a string
 // countWords("the cat sat on the mat") → { the: 2, cat: 1, sat: 1, on: 1, mat: 1 }
 function countWords(str) {
-  // Your code here
+  const map = {};
+  str.split(/\s/g).forEach(val => {
+    const count = map[val] ?? 0;
+    map[val] = count + 1;
+  });
+  return map;
 }
-// console.log(countWords('the cat sat on the mat the'));
+console.log(countWords('the cat sat on the mat the'));
 
 
 console.log('\n=== 🎯 Challenge: Camel to snake case ===');
@@ -99,10 +133,10 @@ console.log('\n=== 🎯 Challenge: Camel to snake case ===');
 // camelToSnake("helloWorld") → "hello_world"
 // camelToSnake("myVariableName") → "my_variable_name"
 function camelToSnake(str) {
-  // Hint: use replace() with regex
+  return str.replaceAll(/[A-Z]/g, match => `_${match.toLocaleLowerCase()}`);
 }
-// console.log(camelToSnake('helloWorld'));       // 'hello_world'
-// console.log(camelToSnake('myVariableName'));   // 'my_variable_name'
+console.log(camelToSnake('helloWorld'));       // 'hello_world'
+console.log(camelToSnake('myVariableName'));   // 'my_variable_name'
 
 
 console.log('\n✅ Exercises completed! Check your answers with a mentor.');
