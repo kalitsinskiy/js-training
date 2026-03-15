@@ -10,7 +10,18 @@ console.log('=== Exercise 1: Function types ===');
 // 2. Function expression
 // 3. Arrow function
 // Your code here:
+function declSquare(x) {
+  return x * x;
+}
+const exprSquare = function (x) {
+  return x * x;
+};
 
+const arrowSquare = (x) => x * x;
+
+console.log(declSquare(2));
+console.log(exprSquare(3));
+console.log(arrowSquare(4));
 
 console.log('\n=== Exercise 2: Default parameters ===');
 // TODO: Create a function 'greet' that takes name and greeting
@@ -18,14 +29,24 @@ console.log('\n=== Exercise 2: Default parameters ===');
 // greet("Alice") should return "Hello, Alice!"
 // greet("Bob", "Hi") should return "Hi, Bob!"
 // Your code here:
-
+const greet = function (name = '', greeting = 'Hello') {
+  console.log(`${greeting} ${name}`);
+};
+greet('Alice');
+greet('Bob', 'Hi');
+greet();
 
 console.log('\n=== Exercise 3: Rest parameters ===');
 // TODO: Create a function that calculates average of any number of arguments
 // average(1, 2, 3) should return 2
 // average(10, 20, 30, 40) should return 25
 // Your code here:
-
+const average = function (...args) {
+  const numbers = [...args];
+  console.log(numbers.reduce((sum, n) => sum + n, 0) / numbers.length);
+};
+average(1, 2, 3);
+average(10, 20, 30, 40);
 
 console.log('\n=== Exercise 4: Arrow function this ===');
 // TODO: Fix this code so the arrow function can access the name property
@@ -39,14 +60,29 @@ const person = {
 person.greet(); // Should print "Hello, I'm Alice"
 */
 // Your fixed code here:
-
+const person = {
+  name: 'Alice',
+  greet() {
+    console.log(`Hello, I'm ${this.name}`);
+  },
+};
+person.greet(); // Should print "Hello, I'm Alice"
+//Arrow functions do not have their own 'this' context, inherits 'this' from parent
 
 console.log('\n=== Exercise 5: Higher-order function ===');
 // TODO: Create a function 'repeat' that takes a function and a number
 // It should call the function n times
 // Example: repeat(() => console.log('Hi'), 3) prints "Hi" three times
 // Your code here:
+const repeat = function (fn, n) {
+  for (let i = 0; i < n; i++) {
+    fn();
+  }
+};
 
+const sayHi = () => console.log('Hi');
+
+repeat(sayHi, 3);
 
 console.log('\n=== Exercise 6: Function that returns function ===');
 // TODO: Create a function 'createAdder' that returns a function
@@ -54,7 +90,15 @@ console.log('\n=== Exercise 6: Function that returns function ===');
 // add5(10) should return 15
 // add5(20) should return 25
 // Your code here:
+const createAdder = function () {
+  return function (n) {
+    return n + 5;
+  };
+};
 
+const add5 = createAdder();
+console.log(add5(10));
+console.log(add5(20));
 
 console.log('\n=== Exercise 7: Array methods with callbacks ===');
 // TODO: Use map, filter, and reduce to:
@@ -63,14 +107,39 @@ console.log('\n=== Exercise 7: Array methods with callbacks ===');
 // 3. Sum the remaining numbers
 const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 // Your code here:
+const myFunc = function (callback, array) {
+  return callback(array);
+};
+const double = function (array) {
+  return array.map((i) => i * i);
+};
+const filter = function (array) {
+  return array.filter((i) => i > 5);
+};
+const reduce = function (array) {
+  return array.reduce((sum, n) => sum + n, 0);
+};
 
+const res1 = myFunc(double, numbers);
+const res2 = myFunc(filter, numbers);
+const res3 = myFunc(reduce, numbers);
+
+console.log(res1);
+console.log(res2);
+console.log(res3);
 
 console.log('\n=== Exercise 8: Callback pattern ===');
 // TODO: Create a function 'processArray' that takes an array and a callback
 // It should apply the callback to each element and return new array
 // processArray([1,2,3], x => x * 2) should return [2, 4, 6]
 // Your code here:
+const processArray = function (array, callback) {
+  return array.map(callback);
+};
 
+const res4 = processArray([1, 2, 3], (x) => x * 2);
+
+console.log(res4);
 
 console.log('\n=== Exercise 9: Closure ===');
 // TODO: Create a function 'createCounter' that returns an object with:
@@ -80,7 +149,34 @@ console.log('\n=== Exercise 9: Closure ===');
 // - getValue(): returns current value
 // The counter should be private (not accessible from outside)
 // Your code here:
+const createCounter = function () {
+  let counter = 0;
+  return {
+    increment() {
+      counter += 1;
+    },
+    decrement() {
+      counter -= 1;
+    },
+    reset() {
+      counter = 0;
+    },
+    getValue() {
+      return counter;
+    },
+  };
+};
 
+const counter1 = createCounter();
+
+counter1.increment();
+counter1.increment();
+counter1.increment();
+counter1.decrement();
+console.log(counter1.getValue());
+
+counter1.reset();
+console.log(counter1.getValue());
 
 console.log('\n=== Exercise 10: Pure function ===');
 // TODO: Rewrite this IMPURE function as a PURE function
@@ -91,18 +187,29 @@ function calculatePrice(price) {
 }
 */
 // Your pure version here (hint: pass discount as parameter):
+let discount = 0.1;
 
+function calculatePrice(price, discount) {
+  return price - price * discount;
+}
+const res5 = calculatePrice(100, discount);
+
+console.log(res5);
 
 console.log('\n=== 🎯 Challenge: Function composition ===');
 // TODO: Create a compose function that takes multiple functions
 // and returns a new function that applies them right-to-left
 // Example:
-// const add1 = x => x + 1;
-// const double = x => x * 2;
-// const add1ThenDouble = compose(double, add1);
-// add1ThenDouble(5) should return 12 // (5 + 1) * 2
+const add1 = (x) => x + 1;
+const double1 = (x) => x * 2;
+const add1ThenDouble = compose(double1, add1);
+console.log(add1ThenDouble(5)); //should return 12 // (5 + 1) * 2
 // Your code here:
-
+function compose(...fns) {
+  return function (x) {
+    return fns.reduceRight((acc, fn) => fn(acc), x);
+  };
+}
 
 console.log('\n=== 🎯 Challenge: Debounce ===');
 // TODO: Create a debounce function that delays function execution
@@ -115,29 +222,42 @@ console.log('\n=== 🎯 Challenge: Debounce ===');
 // debouncedLog('c'); // Cancels previous, waits 1 second
 // Only 'c' gets logged after 1 second
 
-function debounce(func, delay) {
-  // Your code here
-  // Hint: use setTimeout and clearTimeout
+function debounce(fn, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn.apply(this, args), delay);
+  };
 }
 
 // Test it (uncomment):
-// const debouncedLog = debounce((msg) => console.log('Logged:', msg), 1000);
-// debouncedLog('First');
-// debouncedLog('Second');
-// debouncedLog('Third'); // Only this should execute after 1 second
-
+const debouncedLog = debounce((msg) => console.log('Logged:', msg), 1000);
+debouncedLog('First');
+debouncedLog('Second');
+debouncedLog('Third'); // Only this should execute after 1 second
 
 console.log('\n=== 🎯 Challenge: Curry function ===');
 // TODO: Create a curry function that transforms a function
 // taking multiple arguments into a sequence of functions
 // each taking a single argument
 // Example:
-// function add(a, b, c) { return a + b + c; }
-// const curriedAdd = curry(add);
-// curriedAdd(1)(2)(3) should return 6
-// curriedAdd(1, 2)(3) should also return 6
+function add(a, b, c) {
+  return a + b + c;
+}
+const curriedAdd = curry(add);
+console.log(curriedAdd(1)(2)(3)); //should return 6
+console.log(curriedAdd(1, 2)(3)); //should also return 6
 // Your code here:
-
+function curry(fn) {
+  return function curried(...args) {
+    if (args.length >= fn.length) {
+      return fn(...args);
+    }
+    return function (...nextArgs) {
+      return curried(...args, ...nextArgs);
+    };
+  };
+}
 
 console.log('\n=== 🎯 Challenge: Memoization ===');
 // TODO: Create a memoize function that caches function results
@@ -151,19 +271,26 @@ console.log('\n=== 🎯 Challenge: Memoization ===');
 // fastFib(40) // Fast after first call
 
 function memoize(func) {
-  // Your code here
-  // Hint: use an object to store results
+  const cache = {};
+  return function (...args) {
+    const key = JSON.stringify(args);
+    if (cache[key] !== undefined) {
+      return cache[key];
+    }
+    const result = func.apply(this, args);
+    cache[key] = result;
+    return result;
+  };
 }
 
 // Test it (uncomment):
-// function expensive(n) {
-//   console.log('Computing...');
-//   return n * 2;
-// }
-// const memoized = memoize(expensive);
-// console.log(memoized(5)); // Logs "Computing..." then 10
-// console.log(memoized(5)); // Just returns 10 (no "Computing...")
-// console.log(memoized(10)); // Logs "Computing..." then 20
-
+function expensive(n) {
+  console.log('Computing...');
+  return n * 2;
+}
+const memoized = memoize(expensive);
+console.log(memoized(5)); // Logs "Computing..." then 10
+console.log(memoized(5)); // Just returns 10 (no "Computing...")
+console.log(memoized(10)); // Logs "Computing..." then 20
 
 console.log('\n✅ Exercises completed! Check your answers with a mentor.');
