@@ -4,18 +4,42 @@
 // Complete the TODO exercises below
 // Run this file with: node src/01-javascript/07-objects/exercises/objects.js
 
+const { json } = require('stream/consumers');
+
 console.log('=== Exercise 1: Create and access ===');
 // TODO: Create an object 'car' with brand, model, and year properties
 // Access and log each property using both dot and bracket notation
 // Your code here:
-
+const car = { brand: 'Toyota', model: 'Camry', year: 2024 };
+console.log('Brand:', car.brand);
+console.log('Model:', car.model);
+console.log('Year:', car.year);
+console.log('Brand:', car['brand']);
+console.log('Model:', car['model']);
+console.log('Year:', car['year']);
 
 console.log('\n=== Exercise 2: Object methods ===');
 // TODO: Create an object 'calculator' with add, subtract methods
 // Each method should use this.value and return this for chaining
 // Example: calculator.add(5).subtract(2).getValue() should return 3
 // Your code here:
+const calculator = {
+  value: 0,
+  add: function (num) {
+    this.value += num;
+    return this;
+  },
+  subtract: function (num) {
+    this.value -= num;
+    return this;
+  },
+  getValue: function () {
+    return this.value;
+  },
+};
 
+const result = calculator.add(5).subtract(2).getValue();
+console.log('Result:', result); // Should log 3
 
 console.log('\n=== Exercise 3: Object destructuring ===');
 // TODO: Destructure this object to get name and age
@@ -23,26 +47,35 @@ console.log('\n=== Exercise 3: Object destructuring ===');
 // Set default value for city to 'Unknown'
 const user = { name: 'Alice', age: 25 };
 // Your code here:
-
+const { name, age: userAge, city = 'Unknown' } = user;
+console.log('Name:', name);
+console.log('User Age:', userAge);
+console.log('City:', city);
 
 console.log('\n=== Exercise 4: Nested destructuring ===');
 // TODO: Extract city and country from the nested address
 const person = {
   name: 'Bob',
   address: {
-    city: 'London',
-    country: 'UK'
-  }
+    city1: 'London',
+    country: 'UK',
+  },
 };
 // Your code here:
-
+const {
+  address: { city1, country },
+} = person;
+console.log(city1);
+console.log(country);
 
 console.log('\n=== Exercise 5: Spread operator ===');
 // TODO: Create a copy of original
 // Add a new property 'c: 3' without modifying original
 const original = { a: 1, b: 2 };
 // Your code here:
-
+const copy = { ...original, c: 3 };
+console.log('Original:', original);
+console.log('Copy:', copy);
 
 console.log('\n=== Exercise 6: Merge objects ===');
 // TODO: Merge defaults and userSettings
@@ -50,7 +83,8 @@ console.log('\n=== Exercise 6: Merge objects ===');
 const defaults = { theme: 'light', fontSize: 14, sidebar: true };
 const userSettings = { theme: 'dark', fontSize: 16 };
 // Your code here:
-
+const finalSettings = { ...defaults, ...userSettings };
+console.log('Final settings:', finalSettings);
 
 console.log('\n=== Exercise 7: Object.keys/values/entries ===');
 // TODO: Use Object methods to:
@@ -60,12 +94,22 @@ console.log('\n=== Exercise 7: Object.keys/values/entries ===');
 const product = { name: 'Laptop', price: 1000, inStock: true };
 // Your code here:
 
+const keys = Object.keys(product);
+console.log('Keys:', keys);
+const values = Object.values(product);
+console.log('Values:', values);
+const entries = Object.entries(product);
+console.log('Entries:', entries);
 
 console.log('\n=== Exercise 8: Transform object ===');
 // TODO: Double all prices using Object.entries and Object.fromEntries
 const prices = { apple: 1.5, banana: 0.5, orange: 2.0 };
 // Your code here:
 
+const doubledPrices = Object.fromEntries(
+  Object.entries(prices).map(([key, value]) => [key, value * 2])
+);
+console.log('Doubled prices:', doubledPrices);
 
 console.log('\n=== Exercise 9: this keyword ===');
 // TODO: Fix this object so the greet method can access the name
@@ -78,7 +122,13 @@ const person = {
 };
 */
 // Your fixed code here:
-
+const person2 = {
+  name: 'Alice',
+  greet() {
+    console.log(`Hello, I'm ${this.name}`);
+  },
+};
+person2.greet();
 
 console.log('\n=== Exercise 10: Optional chaining ===');
 // TODO: Safely access user.profile.email using optional chaining
@@ -86,49 +136,61 @@ console.log('\n=== Exercise 10: Optional chaining ===');
 const userData = { name: 'Bob' }; // no profile!
 // Your code here:
 
+const email = userData.profile?.email;
+console.log('Email:', email);
 
 console.log('\n=== 🎯 Challenge: Deep clone ===');
 // TODO: Create a deep clone function that copies nested objects
 function deepClone(obj) {
   // Your code here
   // Hint: Use recursion or JSON.parse(JSON.stringify())
+
+  return JSON.parse(JSON.stringify(obj));
 }
 
 // Test it (uncomment):
-// const original = { a: 1, b: { c: 2 } };
-// const cloned = deepClone(original);
-// cloned.b.c = 99;
-// console.log(original.b.c); // Should still be 2
-
+const original2 = { a: 1, b: { c: 2 } };
+const cloned2 = deepClone(original2);
+cloned2.b.c = 99;
+console.log(original2.b.c); // Should still be 2
 
 console.log('\n=== 🎯 Challenge: Pick properties ===');
 // TODO: Create a function that picks specific properties from an object
 function pick(obj, keys) {
   // Your code here
   // Hint: Use Object.fromEntries and filter
+  return Object.fromEntries(
+    Object.entries(obj).filter(([key]) => keys.includes(key))
+  );
 }
 
 // Test it (uncomment):
-// const data = { a: 1, b: 2, c: 3, d: 4 };
-// console.log(pick(data, ['a', 'c'])); // { a: 1, c: 3 }
-
+const data = { a: 1, b: 2, c: 3, d: 4 };
+console.log(pick(data, ['a', 'c'])); // { a: 1, c: 3 }
 
 console.log('\n=== 🎯 Challenge: Group by property ===');
 // TODO: Group array of objects by a specific property
 function groupBy(array, property) {
   // Your code here
   // Hint: Use reduce
+  return array.reduce((acc, item) => {
+    const key = item[property];
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+    acc[key].push(item);
+    return acc;
+  }, {});
 }
 
 // Test it (uncomment):
-// const users = [
-//   { name: 'Alice', role: 'admin' },
-//   { name: 'Bob', role: 'user' },
-//   { name: 'Charlie', role: 'admin' }
-// ];
-// console.log(groupBy(users, 'role'));
+const users = [
+  { name: 'Alice', role: 'admin' },
+  { name: 'Bob', role: 'user' },
+  { name: 'Charlie', role: 'admin' },
+];
+console.log(groupBy(users, 'role'));
 // Should be: { admin: [{...}, {...}], user: [{...}] }
-
 
 console.log('\n=== 🎯 Challenge: Flatten object ===');
 // TODO: Flatten nested object to dot notation
@@ -136,26 +198,38 @@ console.log('\n=== 🎯 Challenge: Flatten object ===');
 function flattenObject(obj, prefix = '') {
   // Your code here
   // Hint: Use recursion
+
+  return Object.entries(obj).reduce((acc, [key, value]) => {
+    const newKey = prefix ? `${prefix}.${key}` : key;
+    if (typeof value === 'object' && value !== null) {
+      Object.assign(acc, flattenObject(value, newKey));
+    } else {
+      acc[newKey] = value;
+    }
+    return acc;
+  }, {});
 }
 
 // Test it (uncomment):
-// const nested = { a: 1, b: { c: 2, d: { e: 3 } } };
-// console.log(flattenObject(nested));
+const nested = { a: 1, b: { c: 2, d: { e: 3 } } };
+console.log(flattenObject(nested));
 // Should be: { a: 1, 'b.c': 2, 'b.d.e': 3 }
-
 
 console.log('\n=== 🎯 Challenge: Object diff ===');
 // TODO: Find differences between two objects
 function diff(obj1, obj2) {
   // Your code here
   // Return object with changed properties
+
+  return Object.fromEntries(
+    Object.entries(obj2).filter(([key, value]) => obj1[key] !== value)
+  );
 }
 
 // Test it (uncomment):
-// const before = { a: 1, b: 2, c: 3 };
-// const after = { a: 1, b: 999, d: 4 };
-// console.log(diff(before, after));
+const before = { a: 1, b: 2, c: 3 };
+const after = { a: 1, b: 999, d: 4 };
+console.log(diff(before, after));
 // Should show: { b: 999, d: 4 } (or similar)
-
 
 console.log('\n✅ Exercises completed! Check your answers with a mentor.');
