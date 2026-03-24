@@ -15,31 +15,44 @@ const product = {
   tags: ['electronics', 'computers']
 };
 // Your code here:
-
+const serialized =JSON.stringify(product);
+console.log(`Type: ${typeof serialized}`);
+console.log(`Length: ${serialized.length}`);
+console.log(serialized);
 
 console.log('\n=== Exercise 2: Pretty print JSON ===');
 // TODO: Serialize the product from Ex1 with 2-space indentation
 // and log the result
 // Your code here:
-
+const prettyProduct = JSON.stringify(product, null, 2);
+console.log(prettyProduct);
 
 console.log('\n=== Exercise 3: JSON.parse ===');
 // TODO: Parse this JSON string and log each field separately
 const jsonString = '{"name":"Alice","age":30,"skills":["JS","TS","React"],"active":true}';
 // Your code here:
 // Expected: name=Alice, age=30, skills count=3, active=true
-
+const parsed = JSON.parse(jsonString);
+for (const field in parsed) {
+  console.log(`${field}: ${parsed[field]}`);
+}
 
 console.log('\n=== Exercise 4: Safe JSON parse ===');
 // TODO: Write a safeJsonParse(str) function
 // Returns parsed object on success, null on failure (no throwing)
 function safeJsonParse(str) {
   // Your code here
+  try {
+    return JSON.parse(str, null, 2);
+  } catch (error) {
+    console.error(`Error on parsing: ${error}`);
+    return null;
+  }
 }
-// console.log(safeJsonParse('{"name":"Bob"}')); // { name: 'Bob' }
-// console.log(safeJsonParse('{invalid json}')); // null
-// console.log(safeJsonParse('null'));           // null
-// console.log(safeJsonParse('"hello"'));        // 'hello'
+console.log(safeJsonParse('{"name":"Bob"}')); // { name: 'Bob' }
+console.log(safeJsonParse('{invalid json}')); // null
+console.log(safeJsonParse('null'));           // null
+console.log(safeJsonParse('"hello"'));        // 'hello'
 
 
 console.log('\n=== Exercise 5: Replacer — hide sensitive data ===');
@@ -54,7 +67,15 @@ const sensitiveUser = {
   role: 'admin'
 };
 // Your code here (only id, username, email, role should appear in output):
+const sensitiveSerialized = JSON.stringify(sensitiveUser, (key, value) => {
+  const blacklist = ['ssn', 'password'];
 
+  return blacklist.includes(key)
+    ? undefined
+    : value;
+}, 2);
+
+console.log(sensitiveSerialized);
 
 console.log('\n=== Exercise 6: Reviver — restore dates ===');
 // TODO: Parse the JSON below and use a reviver to convert
@@ -62,7 +83,13 @@ console.log('\n=== Exercise 6: Reviver — restore dates ===');
 const eventJson = '{"title":"Conference","createdAt":"2024-03-15T09:00:00.000Z","updatedAt":"2024-03-16T14:30:00.000Z","attendees":150}';
 // Your code here:
 // Verify: parsed.createdAt instanceof Date should be true
-
+const parsedWithDates = JSON.parse(eventJson, (key, value) => {
+  const dateKeys = ['createdAt', 'updatedAt'];
+  return dateKeys.includes(key)
+    ? new Date(value)
+    : value;
+});
+console.log(parsedWithDates.createdAt instanceof Date);
 
 console.log('\n=== Exercise 7: Deep clone with JSON ===');
 // TODO: Deep clone the nested object using JSON
@@ -76,10 +103,16 @@ const original = {
   tags: ['production', 'v2']
 };
 // Your code here:
-// const clone = ...
+const clone = JSON.parse(JSON.stringify(original));
 // Modify clone.settings.theme and clone.tags[0]
+clone.settings.theme = 'light';
+clone.tags[0] = 'lab';
 // Log original to confirm it's unchanged
+console.log('Original:');
+console.log(original);
 
+console.log('Clone:');
+console.log(clone);
 
 console.log('\n=== Exercise 8: toJSON() custom serialization ===');
 // TODO: Add a toJSON() method to the class below
@@ -91,10 +124,16 @@ class ApiResource {
     this._cache = { lastFetched: Date.now(), data: 'internal' }; // should be hidden
   }
   // Add toJSON() here
+  toJSON() {
+    return {
+      id: this.id,
+      name: this.name
+    };
+  }
 }
-// const resource = new ApiResource(1, 'Users');
-// const json = JSON.stringify(resource);
-// console.log(json); // Should be: {"id":1,"name":"Users"}
+const resource = new ApiResource(1, 'Users');
+const json = JSON.stringify(resource);
+console.log(json); // Should be: {"id":1,"name":"Users"}
 
 
 console.log('\n=== Exercise 9: Module pattern (simulate exports) ===');
@@ -104,13 +143,28 @@ console.log('\n=== Exercise 9: Module pattern (simulate exports) ===');
 // This simulates what you'd put in a separate file and export
 function createCalculator() {
   // Your code here — return an object with add, subtract, multiply, divide
+  return {
+    add(a, b) {
+      return a + b;
+    },
+    subtract(a,b) {
+      return a - b;
+    },
+    multiply(a, b) {
+      return a * b;
+    },
+    divide(a, b) {
+      if (b === 0) { throw new Error('Cannot divide by 0'); }
+      return a / b;
+    }
+  };
 }
-// const calc = createCalculator();
-// console.log(calc.add(10, 5));       // 15
-// console.log(calc.subtract(10, 5));  // 5
-// console.log(calc.multiply(4, 3));   // 12
-// console.log(calc.divide(10, 2));    // 5
-// calc.divide(5, 0);                  // Should throw Error
+const calc = createCalculator();
+console.log(calc.add(10, 5));       // 15
+console.log(calc.subtract(10, 5));  // 5
+console.log(calc.multiply(4, 3));   // 12
+console.log(calc.divide(10, 2));    // 5
+//calc.divide(5, 0);                  // Should throw Error
 
 
 console.log('\n=== 🎯 Challenge: Config file parser ===');
@@ -121,21 +175,81 @@ console.log('\n=== 🎯 Challenge: Config file parser ===');
 // 4. Throws a descriptive error if invalid or missing fields
 function parseConfig(jsonString) {
   // Your code here
+  const requirements = new Map([
+    ['host', 'string'],
+    ['port', 'number'],
+    ['debug', 'boolean']
+  ]);
+  const validators = {
+    'string': isValidString,
+    'number': isValidNumber,
+    'boolean': isValidBoolean
+  }
+  const missingFields = [];
+  const invalidTypes = [];
+  const parsed = parse(jsonString);
+
+  for (const [field, type] of requirements.entries()) {
+    const actualProp = parsed[field];
+
+    if (!actualProp) {
+      missingFields.push(field);
+      continue;
+    }
+
+    if (typeof actualProp !== type || !validators[type](actualProp)) {
+      invalidTypes.push(`${field} must be a ${type}`);
+    }
+  }
+
+  if (missingFields.length > 0) {
+    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+  }
+  if (invalidTypes.length > 0) {
+    throw new Error(`Invalid types: ${invalidTypes.join(', ')}`);
+  }
+
+  return parsed;
+}
+
+function parse(str) {
+  try {
+     return JSON.parse(str);
+  } catch (error) {
+    throw new Error('Invalid JSON');
+  }
+}
+
+function isValidString(input) {
+  return typeof input === 'string' &&
+          input.trim().length > 0;
+}
+
+function isValidNumber(input, allowNegative = false) {
+  if (typeof input !== 'number') { return false; }
+
+  return allowNegative
+           ? true
+           : input >= 0;
+}
+
+function isValidBoolean(input) {
+  return typeof input === 'boolean';
 }
 
 // Test:
-// const valid = '{"host":"localhost","port":3000,"debug":true,"extra":"ok"}';
-// const invalid1 = '{bad json}';
-// const invalid2 = '{"host":"localhost"}';  // missing port and debug
-// const invalid3 = '{"host":123,"port":"abc","debug":true}';  // wrong types
-// try {
-//   console.log(parseConfig(valid));    // { host: 'localhost', port: 3000, debug: true, extra: 'ok' }
-//   parseConfig(invalid1);             // throws: Invalid JSON
-//   parseConfig(invalid2);             // throws: Missing required fields: port, debug
-//   parseConfig(invalid3);             // throws: Invalid types: host must be string, port must be number
-// } catch (e) {
-//   console.log('Error:', e.message);
-// }
+const valid = '{"host":"localhost","port":3000,"debug":true,"extra":"ok"}';
+const invalid1 = '{bad json}';
+const invalid2 = '{"host":"localhost"}';  // missing port and debug
+const invalid3 = '{"host":123,"port":"abc","debug":true}';  // wrong types
+try {
+  console.log(parseConfig(valid));    // { host: 'localhost', port: 3000, debug: true, extra: 'ok' }
+  //parseConfig(invalid1);             // throws: Invalid JSON
+  //parseConfig(invalid2);             // throws: Missing required fields: port, debug
+  parseConfig(invalid3);             // throws: Invalid types: host must be string, port must be number
+} catch (e) {
+  console.log('Error:', e.message);
+}
 
 
 console.log('\n=== 🎯 Challenge: Serialize/deserialize class instances ===');
@@ -152,15 +266,36 @@ class Point {
   }
 
   // TODO: Add toJSON() to control serialization
+  toJSON() {
+    return JSON.stringify({x: this.x, y: this.y});
+  }
+
   // TODO: Add static fromJSON(json) to restore from JSON string
+  static fromJSON(json) {
+    let parsed;
+    try {
+      parsed = JSON.parse(json);
+    } catch (error) {
+      console.error(`Error on deserialization: ${error}`);
+      return null;
+    }
+
+    if (isValidNumber(parsed?.x, true) &&
+        isValidNumber(parsed?.y, true)) {
+      return new Point(parsed.x, parsed.y);
+    } else {
+      console.error(`Object misses 'x' and/or 'y' properties`);
+      return null;
+    }
+  }
 }
 
-// const p1 = new Point(0, 0);
-// const p2 = new Point(3, 4);
-// const json = p1.toJSON();
-// const restored = Point.fromJSON(json);
-// console.log(restored instanceof Point); // true
-// console.log(restored.distanceTo(p2));   // 5
+const p1 = new Point(0, 0);
+const p2 = new Point(3, 4);
+const json2 = p1.toJSON();
+const restored = Point.fromJSON(json2);
+console.log(restored instanceof Point); // true
+console.log(restored.distanceTo(p2));   // 5
 
 
 console.log('\n✅ Exercises completed! Check your answers with a mentor.');
