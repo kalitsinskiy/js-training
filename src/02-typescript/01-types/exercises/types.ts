@@ -9,10 +9,10 @@ console.log('=== Exercise 1: Add type annotations ===');
 // TODO: Add explicit type annotations to all variables below
 // (Even though TypeScript can infer them, this exercise is for practice)
 
-const productName = 'Laptop';
-const price = 999.99;
-const inStock = true;
-const quantity = null;
+const productName: string = 'Laptop';
+const price: number = 999.99;
+const inStock: boolean = true;
+const quantity: null = null;
 
 console.log(productName, price, inStock, quantity);
 
@@ -23,11 +23,19 @@ console.log('\n=== Exercise 2: Union type ===');
 // and returns a string (use String() to convert)
 
 // Your type alias here:
-
+type StringOrNumber = string | number;
 // Your function here:
+function stringify(input: StringOrNumber): string {
+  if (typeof input === 'string') {
+    console.log(`String input: ${input}`);
+    return input;
+  }
 
-// console.log(stringify(42));      // '42'
-// console.log(stringify('hello')); // 'hello'
+  console.log(`Number input: ${input}`);
+  return String(input);
+}
+console.log(stringify(42));      // '42'
+console.log(stringify('hello')); // 'hello'
 
 
 console.log('\n=== Exercise 3: Literal types ===');
@@ -36,10 +44,22 @@ console.log('\n=== Exercise 3: Literal types ===');
 // Example: getMonths('summer') => ['June', 'July', 'August']
 
 // Your code here:
-
-// console.log(getMonths('summer'));
-// console.log(getMonths('winter'));
-
+type Season = 'spring' | 'summer' | 'autumn' | 'winter';
+function getMonths(season: Season): string[] {
+  if (season === 'spring') {
+    return ['March', 'April', 'May'];
+  } else if (season === 'summer') {
+    return ['June', 'July', 'August'];
+  } else if ( season === 'autumn') {
+    return ['September', 'October', 'November'];
+  } else if (season === 'winter') {
+    return ['December', 'January', 'February'];
+  } else {
+    return [];
+  }
+}
+console.log(getMonths('summer'));
+console.log(getMonths('winter'));
 
 console.log('\n=== Exercise 4: Discriminated union ===');
 // TODO: Create a discriminated union type 'PaymentResult':
@@ -49,9 +69,19 @@ console.log('\n=== Exercise 4: Discriminated union ===');
 // and returns a human-readable string
 
 // Your code here:
+type PaymentResult =  {status: 'success'; transactionId: string; amount: number} |
+                      {status: 'failure'; error: string; code: number};
 
-// console.log(handlePayment({ status: 'success', transactionId: 'tx_123', amount: 100 }));
-// console.log(handlePayment({ status: 'failure', error: 'Insufficient funds', code: 402 }));
+function handlePayment(result: PaymentResult): string {
+  if (result.status === 'failure') {
+    return `Payment has failed with code ${result.code}: ${result.error}`;
+  }
+
+  return `Payment succeed. Amount: ${result.amount}. Transaction ID: ${result.transactionId}`;
+}
+
+console.log(handlePayment({ status: 'success', transactionId: 'tx_123', amount: 100 }));
+console.log(handlePayment({ status: 'failure', error: 'Insufficient funds', code: 402 }));
 
 
 console.log('\n=== Exercise 5: Type narrowing ===');
@@ -62,10 +92,21 @@ console.log('\n=== Exercise 5: Type narrowing ===');
 //   - for boolean: 'Boolean: true/false'
 
 // Your function here:
+function describeInput(input: string | number | boolean): string {
+  if (typeof input === 'string') {
+    return `String of length ${input.length}: ${input}`;
+  } else if (typeof input === 'number') {
+    return `Number, rounded: ${Math.round(input)}`;
+  } else if (typeof input === 'boolean') {
+    return `Boolean, ${input}`;
+  } else {
+    return 'Unsupported input type';
+  }
+}
 
-// console.log(describeInput('hello'));   // 'String of length 5: "hello"'
-// console.log(describeInput(3.7));       // 'Number, rounded: 4'
-// console.log(describeInput(true));      // 'Boolean: true'
+console.log(describeInput('hello'));   // 'String of length 5: "hello"'
+console.log(describeInput(3.7));       // 'Number, rounded: 4'
+console.log(describeInput(true));      // 'Boolean: true'
 
 
 console.log('\n=== Exercise 6: Tuple ===');
@@ -74,9 +115,17 @@ console.log('\n=== Exercise 6: Tuple ===');
 // Use split(','), Number(), and value === 'true'
 
 // Your function here:
+function parseCSVRow(str: string): [name: string, age: number, active: boolean] {
+  const splitted = str.split(',');
+  return [
+    splitted[0]?.trim() ?? '',
+    Number(splitted[1]),
+    splitted[2] === 'true'
+  ];
+}
 
-// const [name, age, active] = parseCSVRow('Alice,30,true');
-// console.log(name, age, active); // Alice 30 true
+const [name, age, active] = parseCSVRow('Alice,30,true');
+console.log(name, age, active); // Alice 30 true
 
 
 console.log('\n=== Exercise 7: Intersection type ===');
@@ -87,9 +136,20 @@ console.log('\n=== Exercise 7: Intersection type ===');
 // with current timestamps
 
 // Your code here:
+type Timestamped = { createdAt: Date; updatedAt: Date };
+type Identifiable = { id: string };
+type Entity = Timestamped & Identifiable;
 
-// const entity = createEntity('user_1');
-// console.log(entity.id, entity.createdAt, entity.updatedAt);
+function createEntity(identifiable: string): Entity {
+  return {
+    id: identifiable,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+}
+
+const entity = createEntity('user_1');
+console.log(entity.id, entity.createdAt, entity.updatedAt);
 
 
 console.log('\n=== Exercise 8: any vs unknown ===');
@@ -103,9 +163,16 @@ function shout(value: any): string { // eslint-disable-line @typescript-eslint/n
 console.log('shout (unsafe):', shout('hello')); // 'HELLO' — works, but breaks for non-strings
 
 // Your fixed version here:
+function shoutSafe(value: unknown): string {
+  if (typeof value === 'string') {
+    return value.toUpperCase();
+  }
 
-// console.log(shoutSafe('hello'));  // 'HELLO'
-// console.log(shoutSafe(42));       // 'Not a string'
+  return 'Not a string';
+}
+
+console.log(shoutSafe('hello'));  // 'HELLO'
+console.log(shoutSafe(42));       // 'Not a string'
 
 
 console.log('\n=== 🎯 Challenge: Exhaustive type checking ===');
@@ -117,10 +184,42 @@ console.log('\n=== 🎯 Challenge: Exhaustive type checking ===');
 // and throws an error for unhandled ones using 'never'
 
 // Your code here:
+type Notification = Email | Sms | Push;
+type Email = { type: 'email'; to: string; subject: string };
+type Sms = { type: 'sms'; to: string; message: string };
+type Push = { type: 'push'; deviceId: string; title: string };
 
-// sendNotification({ type: 'email', to: 'user@example.com', subject: 'Hello' });
-// sendNotification({ type: 'sms', to: '+380501234567', message: 'Hi' });
-// sendNotification({ type: 'push', deviceId: 'dev_1', title: 'Alert' });
+function sendNotification(notification: Notification): void {
+  if (notification.type === 'email') {
+    sendEmail(notification);
+  } else if (notification.type === 'push') {
+    sendPush(notification);
+  } else if (notification.type === 'sms') {
+    sendSms(notification);
+  } else {
+    unknownNotification();
+  }
+}
+
+function sendEmail(notification: Email): void {
+  console.log(`Sending email to ${notification.to} with subject "${notification.subject}"`);
+}
+
+function sendPush(notification: Push): void {
+  console.log(`Sending push to device ${notification.deviceId} with title "${notification.title}"`);
+}
+
+function sendSms(notification: Sms): void {
+  console.log(`Sending SMS to ${notification.to}: "${notification.message}"`);
+}
+
+function unknownNotification(): never {
+  throw new Error('Unknown notification type');
+}
+
+sendNotification({ type: 'email', to: 'user@example.com', subject: 'Hello' });
+sendNotification({ type: 'sms', to: '+380501234567', message: 'Hi' });
+sendNotification({ type: 'push', deviceId: 'dev_1', title: 'Alert' });
 
 
 console.log('\n✅ Exercises completed! Check your answers with a mentor.');
