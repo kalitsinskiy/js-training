@@ -5,12 +5,12 @@
 
 // --- Part 1 ---
 const fns = [];
-for (var i = 0; i < 3; i++) {
+for (let i = 0; i < 3; i++) {
   fns.push({ val: i, fn: () => i }); // intentional: var closure trap
 }
 
-console.log(fns[0].val, fns[0].fn()); // ?
-console.log(fns[2].val, fns[2].fn()); // ?
+console.log(fns[0].val, fns[0].fn()); // ? 0 3
+console.log(fns[2].val, fns[2].fn()); // ? 2 3
 
 // --- Part 2 ---
 function makePlugin(id, registry) {
@@ -30,16 +30,16 @@ const reg = [];
 const p1 = makePlugin('A', reg);
 const p2 = makePlugin('B', reg);
 
-console.log(p1.run()); // ?
-console.log(p1.run()); // ?
-console.log(p2.run()); // ?
-console.log(reg);      // ?
+console.log(p1.run()); // ? 'A:1'
+console.log(p1.run()); // ? 'A:2'
+console.log(p2.run()); // ? 'B:1'
+console.log(reg); // ? ['A', 'B']
 
 // --- Part 3 ---
 const { run } = p1;
-console.log(run());      // ?
-console.log(p1.stats()); // ?
-console.log(p2.stats()); // ?
+console.log(run()); // ? 'undefined:3'
+console.log(p1.stats()); // ? { id: 'A', uses: 3 }
+console.log(p2.stats()); // ? { id: 'B', uses: 1 }
 
-const allVals = fns.map(f => f.fn()).concat(reg);
-console.log(allVals); // ?
+const allVals = fns.map((f) => f.fn()).concat(reg);
+console.log(allVals); // ? [0, 1, 2, 'A', 'B']
