@@ -11,10 +11,15 @@ console.log('=== Exercise 1: Generic function ===');
 // Hint: use .filter(item => item != null)
 
 // Your function here:
+function compact<T>(input: T[] | undefined | null): T[] {
+  if (!input) { return []; }
 
-// console.log(compact([1, null, 2, undefined, 3]));   // [1, 2, 3]
-// console.log(compact(['a', null, 'b']));              // ['a', 'b']
-// console.log(compact(null));                          // []
+  return input.filter(element => element != null);
+}
+
+console.log(compact([1, null, 2, undefined, 3]));   // [1, 2, 3]
+console.log(compact(['a', null, 'b']));              // ['a', 'b']
+console.log(compact(null));                          // []
 
 
 console.log('\n=== Exercise 2: Generic with constraint ===');
@@ -24,14 +29,27 @@ console.log('\n=== Exercise 2: Generic with constraint ===');
 //   - the value at T[K] must be string | number (add this constraint)
 
 // Your function here:
+function sortBy<T, K extends keyof T>(input: T[], key: K & (T[K] extends string | number ? K : never)): T[] {
+  return [...input].sort((a, b) => {
+    const valueA = a[key] as string | number;
+    const valueB = b[key] as string | number;
 
-// const users = [
-//   { name: 'Charlie', age: 25 },
-//   { name: 'Alice', age: 30 },
-//   { name: 'Bob', age: 20 },
-// ];
-// console.log(sortBy(users, 'name')); // Alice, Bob, Charlie
-// console.log(sortBy(users, 'age'));  // 20, 25, 30
+    if (typeof valueA === 'string' && typeof valueB === 'string') {
+      return valueA.localeCompare(valueB);
+    } else if (typeof valueA === 'number' && typeof valueB === 'number') {
+      return valueA - valueB;
+    }
+    return 0;
+  });
+}
+
+const users = [
+  { name: 'Charlie', age: 25 },
+  { name: 'Alice', age: 30 },
+  { name: 'Bob', age: 20 },
+];
+console.log(sortBy(users, 'name')); // Alice, Bob, Charlie
+console.log(sortBy(users, 'age'));  // 20, 25, 30
 
 
 console.log('\n=== Exercise 3: Generic interface ===');
@@ -44,12 +62,34 @@ console.log('\n=== Exercise 3: Generic interface ===');
 // Write a function 'mapResult<T, U, E>(result: Result<T, E>, fn: (v: T) => U): Result<U, E>'
 
 // Your code here:
+type Result<T, E = Error> =
+{ success: true; value: T } |
+{ success: false; error: E };
 
-// const r1 = ok(42);
-// const r2 = fail(new Error('oops'));
-// const r3 = mapResult(r1, n => n * 2);
-// console.log(r1, r2);
-// console.log(r3); // { success: true, value: 84 }
+function ok<T>(value: T): Result<T> {
+  return { success: true, value };
+}
+
+function fail<E = Error>(error: E): Result<never, E> {
+  return { success: false, error };
+}
+
+function mapResult<T, U, E>(
+  result: Result<T, E>,
+  fn: (v: T) => U
+): Result<U,E> {
+  if (result.success) {
+    return { success: true, value: fn(result.value) };
+  }
+
+  return result;
+}
+
+const r1 = ok(42);
+const r2 = fail(new Error('oops'));
+const r3 = mapResult(r1, n => n * 2);
+console.log(r1, r2);
+console.log(r3); // { success: true, value: 84 }
 
 
 console.log('\n=== Exercise 4: keyof usage ===');
@@ -58,10 +98,17 @@ console.log('\n=== Exercise 4: keyof usage ===');
 // (Implement it yourself, don't rely on the Pick utility type doing the work)
 
 // Your function here:
+function pick<T, K extends keyof T>(obj: T, key: K[]): Pick<T, K> {
+  const result = {};
 
-// const user = { id: 1, name: 'Alice', email: 'a@x.com', age: 30 };
-// console.log(pick(user, ['name', 'email']));  // { name: 'Alice', email: 'a@x.com' }
-// console.log(pick(user, ['id', 'age']));      // { id: 1, age: 30 }
+  key.forEach(k => Object.assign(result, { [k]: obj[k]} ));
+
+  return result as Pick<T,K>;
+}
+
+const user = { id: 1, name: 'Alice', email: 'a@x.com', age: 30 };
+console.log(pick(user, ['name', 'email']));  // { name: 'Alice', email: 'a@x.com' }
+console.log(pick(user, ['id', 'age']));      // { id: 1, age: 30 }
 
 
 console.log('\n=== Exercise 5: infer — extract types ===');
@@ -79,12 +126,24 @@ console.log('\n=== Exercise 5: infer — extract types ===');
 //    FlattenPromise<string>           // string
 
 // Your type definitions here:
+type FirstArgument<T> = T extends (...args: infer A) => unknown ? A[0] : never;
+type UnwrapArray<T> = T extends (infer E)[]
+  ? E extends unknown[]
+    ? UnwrapArray<E>
+    : E
+  : T;
 
-// Verify (these should compile without errors):
-// const fa: FirstArgument<(name: string, age: number) => void> = 'hello';
-// const ua: UnwrapArray<number[]> = 42;
-// const fp: FlattenPromise<Promise<boolean>> = true;
-// console.log(fa, ua, fp);
+type FlattenPromise<T> = T extends Promise<infer K>
+  ? K extends Promise<unknown>
+    ? FlattenPromise<K>
+    : K
+  : T;
+
+//Verify (these should compile without errors):
+const fa: FirstArgument<(name: string, age: number) => void> = 'hello';
+const ua: UnwrapArray<number[]> = 42;
+const fp: FlattenPromise<Promise<boolean>> = true;
+console.log(fa, ua, fp);
 
 
 console.log('\n=== Exercise 6: Generic class ===');
@@ -99,14 +158,53 @@ console.log('\n=== Exercise 6: Generic class ===');
 //   - get size(): number
 
 // Your code here:
+class Cache<K,V> {
+  #storage = new Map<K,V>();
 
-// const cache = new Cache<string, number>();
-// cache.set('a', 1);
-// cache.set('b', 2);
-// console.log(cache.get('a'));  // 1
-// console.log(cache.size);     // 2
-// cache.delete('a');
-// console.log(cache.has('a')); // false
+  public set(key: K, value: V, ttlMs?: number): void {
+    if (ttlMs) {
+      setTimeout(() => this.expire(key), ttlMs);
+    }
+
+    this.#storage.set(key, value);
+  }
+
+  private expire(key: K): void {
+    if (!this.#storage.has(key)) { return; }
+
+    console.info(`Deleting ${key}`);
+    this.#storage.delete(key);
+  }
+
+  public get(key: K): V | undefined {
+    return this.#storage.get(key);
+  }
+
+  public has(key: K): boolean {
+    return this.#storage.has(key);
+  }
+
+  public delete(key: K): void {
+    this.#storage.delete(key);
+  }
+
+  public clear(): void {
+    this.#storage.clear();
+  }
+
+  public get size(): number {
+    return this.#storage.size;
+  }
+}
+
+const cache = new Cache<string, number>();
+cache.set('a', 1);
+cache.set('b', 2, 5);
+console.log(cache.get('a'));  // 1
+console.log(cache.size);     // 2
+cache.delete('a');
+console.log(cache.has('a')); // false
+setTimeout(() => { console.log(`Contains b: ${cache.has('b')}`); }, 10);
 
 
 console.log('\n=== 🎯 Challenge: Type-safe deep get ===');
@@ -123,5 +221,27 @@ console.log('\n=== 🎯 Challenge: Type-safe deep get ===');
 // const city = deepGet(data, 'user.address.city');  // type: string
 
 // Your code here:
+type DeepGet<T, Path extends string> = Path extends `${infer Key}.${infer Rest}`
+? Key extends keyof T
+  ? DeepGet<T[Key], Rest>
+  : never
+: Path extends keyof T
+  ? T[Path]
+  : never;
+
+function deepGet<T, Path extends string>(obj: T, path: Path): DeepGet<T, Path> {
+  const keys = path.split('.');
+  let result: any = obj;
+
+  for (const key of keys) {
+    result = result?.[key];
+  }
+
+  return result;
+}
+
+const data = { user: { name: 'Alice', address: { city: 'Kyiv' } } };
+const city = deepGet(data, 'user.address.city');  // type: string
+console.log(typeof city);
 
 console.log('\n✅ Exercises completed! Check your answers with a mentor.');
