@@ -31,13 +31,18 @@ console.log('=== Exercise 1: Partial for updates ===');
 // Then write function 'patchArticle(article: Article, update: ArticleUpdate): Article'
 
 // Your code here:
+type ArticleUpdate = Partial<Omit<Article, 'id' | 'createdAt' | 'authorId'>>;
 
-// const article: Article = {
-//   id: 'a1', title: 'Hello', body: 'World', authorId: 'u1',
-//   tags: [], published: false, createdAt: new Date(), updatedAt: new Date()
-// };
-// const patched = patchArticle(article, { title: 'Updated Title', published: true });
-// console.log(patched.title, patched.published);
+function patchArticle(article: Article, update: ArticleUpdate): Article {
+  return { ...article, ...update };
+}
+
+const article: Article = {
+  id: 'a1', title: 'Hello', body: 'World', authorId: 'u1',
+  tags: [], published: false, createdAt: new Date(), updatedAt: new Date()
+};
+const patched = patchArticle(article, { title: 'Updated Title', published: true });
+console.log(patched.title, patched.published);
 
 
 console.log('\n=== Exercise 2: Pick for API responses ===');
@@ -49,10 +54,17 @@ console.log('\n=== Exercise 2: Pick for API responses ===');
 // Write a function 'toListItem(article: Article): ArticleListItem'
 
 // Your code here:
+type ArticleListItem = Pick<Article, 'id' | 'title' | 'tags' | 'published' | 'createdAt'>;
+type AuthorPublic = Pick<Author, 'id' | 'name' | 'bio'>;
 
-// const item = toListItem(article);
-// console.log(item.title);
-// console.log(item.body); // ❌ should not exist on ArticleListItem
+function toListItem(article: Article): ArticleListItem {
+  const { id, title, tags, published, createdAt } = article;
+  return { id, title, tags, published, createdAt };
+}
+
+const item = toListItem(article);
+console.log(item.title);
+//console.log(item.body); // ❌ should not exist on ArticleListItem
 
 
 console.log('\n=== Exercise 3: Omit for create DTOs ===');
@@ -62,12 +74,23 @@ console.log('\n=== Exercise 3: Omit for create DTOs ===');
 // Write 'createArticle(dto: CreateArticleDto): Article' that auto-assigns id + timestamps
 
 // Your code here:
+type CreateArticleDto = Omit<Article, 'id' | 'createdAt' | 'updatedAt'>;
+type CreateAuthorDto = Omit<Author, 'id'>;
 
-// const dto: CreateArticleDto = {
-//   title: 'New Post', body: '...', authorId: 'u1', tags: ['ts'], published: false
-// };
-// const newArticle = createArticle(dto);
-// console.log(newArticle.id, newArticle.createdAt);
+function createArticle(dto: CreateArticleDto): Article {
+  return {
+    ...dto,
+    id: `art_${Date.now()}`,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+}
+
+const dto: CreateArticleDto = {
+  title: 'New Post', body: '...', authorId: 'u1', tags: ['ts'], published: false
+};
+const newArticle = createArticle(dto);
+console.log(newArticle.id, newArticle.createdAt);
 
 
 console.log('\n=== Exercise 4: Record ===');
@@ -80,10 +103,24 @@ console.log('\n=== Exercise 4: Record ===');
 //   c) Function 'hasPermission(role, action)': checks if role can perform action
 
 // Your code here:
+type ArticleById = Record<'id', Article>;
+type RoleToPermissions = Record<'admin' | 'editor' | 'viewer', string[]>;
 
-// console.log(hasPermission('editor', 'delete')); // false
-// console.log(hasPermission('admin', 'delete'));  // true
-// console.log(hasPermission('viewer', 'read'));   // true
+function hasPermission<K extends keyof RoleToPermissions>(
+  role: K, action: string
+): boolean {
+  const permissions: RoleToPermissions = {
+    admin: ['create', 'read', 'update', 'delete'],
+    editor: ['create', 'read', 'update'],
+    viewer: ['read']
+  };
+
+  return permissions[role].includes(action);
+}
+
+console.log(hasPermission('editor', 'delete')); // false
+console.log(hasPermission('admin', 'delete'));  // true
+console.log(hasPermission('viewer', 'read'));   // true
 
 
 console.log('\n=== Exercise 5: Exclude and Extract ===');
@@ -97,7 +134,10 @@ type EventType = 'click' | 'focus' | 'blur' | 'keydown' | 'keyup' | 'mouseenter'
 // d) Create 'FocusEvents' — Extract focus and blur
 
 // Your code here:
-
+type KeyboardEvents = Extract<EventType, 'keydown' | 'keyup'>;
+type MouseEvents = Extract<EventType, `mouse${string}`>;
+type NonMouseEvents = Exclude<EventType, MouseEvents>;
+type FocusEvents = Extract<EventType, 'focus' | 'blur'>;
 
 console.log('\n=== Exercise 6: ReturnType and Parameters ===');
 // TODO: Given these functions (don't modify them):
@@ -111,8 +151,8 @@ async function loadAuthorWithArticles(_authorId: string): Promise<{ author: Auth
 }
 
 // These functions are stubs for type extraction — call them if you want to test:
-// searchArticles('query', ['tag'], 10);
-// loadAuthorWithArticles('author_1').then(console.log);
+searchArticles('query', ['tag'], 10);
+loadAuthorWithArticles('author_1').then(console.log);
 
 // Using ONLY ReturnType, Parameters, and Awaited (no manual type writing):
 // a) Extract the type of the first parameter of searchArticles
@@ -121,16 +161,18 @@ async function loadAuthorWithArticles(_authorId: string): Promise<{ author: Auth
 // d) Extract the type of just the 'articles' property from (c)
 
 // Your type aliases here:
-// type SearchFirstParam = ...
-// type SearchResult = ...
-// type LoadedResult = ...
-// type ArticleList = ...
+type SearchFirstParam = Parameters<typeof searchArticles>[0];
+type SearchResult = ReturnType<typeof searchArticles>;
+type LoadedResult = Awaited<ReturnType<typeof loadAuthorWithArticles>>;
+type ArticleList = LoadedResult['articles'];
 
 // Verify:
-// const param: SearchFirstParam = 'typescript';
-// const result: SearchResult = [];
-// const loaded: LoadedResult = { author: {} as Author, articles: [] };
-
+const param: SearchFirstParam = 'typescript';
+const result: SearchResult = [];
+const loaded: LoadedResult = { author: {} as Author, articles: [] };
+console.log(param);
+console.log(result);
+console.log(loaded);
 
 console.log('\n=== Exercise 7: Readonly for immutability ===');
 // TODO: Write a function 'freeze<T>(obj: T): Readonly<T>'
@@ -140,10 +182,32 @@ console.log('\n=== Exercise 7: Readonly for immutability ===');
 //       Hint: type DeepReadonly<T> = { readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K] }
 
 // Your code here:
+function freeze<T>(obj: T): Readonly<T> {
+  return Object.freeze(obj);
+}
 
-// const frozen = freeze({ name: 'Alice', tags: ['ts'] });
+type DeepReadonly<T> = {
+  readonly [K in keyof T]: T[K] extends object
+    ? DeepReadonly<T[K]>
+    : T[K]
+};
+
+function deepFreeze<T>(obj: T): DeepReadonly<T> {
+  Object.freeze(obj);
+
+  for (const key in obj) {
+    const value = obj[key];
+    if (typeof value === 'object' && value !== null) {
+      deepFreeze(value);
+    }
+  }
+
+  return obj as DeepReadonly<T>;
+}
+
+const frozen = freeze({ name: 'Alice', tags: ['ts'] });
 // frozen.name = 'Bob'; // ❌ should be readonly at compile time
-
+console.log(frozen);
 
 console.log('\n=== 🎯 Challenge: Build utility types from scratch ===');
 // TODO: Implement these utility types YOURSELF (without using the built-in versions):
@@ -164,15 +228,27 @@ console.log('\n=== 🎯 Challenge: Build utility types from scratch ===');
 //    Hint: { [P in K]: V }
 
 // Your implementations here:
+type MyPartial<T> = { [P in keyof T]?: T[P] };
+type MyReadonly<T> = { readonly [P in keyof T]: T[P] };
+type MyPick<T, K extends keyof T> = { [P in K]: T[P] };
+type MyOmit<T, K extends keyof T> = MyPick<T, Exclude<keyof T, K>>;
+type MyRecord<K extends string, V> = { [P in K]: V }
 
 // Verify they work like the built-ins:
-// type A = MyPartial<Article>;         // all optional
-// type B = MyReadonly<Author>;         // all readonly
-// type C = MyPick<Article, 'id' | 'title'>;  // { id: string; title: string }
-// type D = MyOmit<Article, 'body' | 'authorId'>; // everything else
+type A = MyPartial<Article>;         // all optional
+type B = MyReadonly<Author>;         // all readonly
+type C = MyPick<Article, 'id' | 'title'>;  // { id: string; title: string }
+type D = MyOmit<Article, 'body' | 'authorId'>; // everything else
 
 console.log('\n✅ Exercises completed! Check your answers with a mentor.');
 
 // Pre-provided stubs — exported so TypeScript knows they're used
-export type { EventType };
-export { searchArticles, loadAuthorWithArticles };
+export type {
+  EventType,
+  AuthorPublic, CreateAuthorDto, ArticleById,
+  KeyboardEvents, NonMouseEvents, FocusEvents,
+  ArticleList,
+  MyRecord,
+  A, B, C, D
+ };
+export { searchArticles, loadAuthorWithArticles, deepFreeze };
