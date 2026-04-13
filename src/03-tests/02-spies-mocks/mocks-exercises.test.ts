@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { assert } from 'console';
 import { EmailService } from './email.service';
 import { UserService } from './user.service';
 
@@ -18,6 +19,10 @@ describe('Exercise 1: jest.fn() basics', () => {
     // TODO: call runWithValue with mockCallback
     // TODO: assert it was called once
     // TODO: assert it was called with 42
+    runWithValue(mockCallback);
+
+    expect(mockCallback).toHaveBeenCalledTimes(1);
+    expect(mockCallback).toHaveBeenCalledWith(42);
   });
 
   test('mock returns different values on consecutive calls', () => {
@@ -26,6 +31,15 @@ describe('Exercise 1: jest.fn() basics', () => {
     // TODO: configure mockFn to return 'first' the first time,
     //       'second' the second time, and 'default' for all subsequent calls
     // TODO: call mockFn 4 times and assert each return value
+    mockFn
+      .mockReturnValueOnce('first')
+      .mockReturnValueOnce('second')
+      .mockReturnValue('default');
+
+    expect(mockFn()).toBe('first');
+    expect(mockFn()).toBe('second');
+    expect(mockFn()).toBe('default');
+    expect(mockFn()).toBe('default');
   });
 });
 
@@ -37,6 +51,12 @@ describe('Exercise 2: jest.spyOn()', () => {
     // TODO: call Math.random() and verify it returns 0.5
     // TODO: verify it was called
     // TODO: restore the original
+
+    const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.5);
+    expect(Math.random()).toBe(0.5);
+    expect(randomSpy).toHaveBeenCalled();
+
+    randomSpy.mockRestore();
   });
 
   test('spy on console.log to suppress and verify', () => {
@@ -44,6 +64,14 @@ describe('Exercise 2: jest.spyOn()', () => {
     // TODO: call console.log('test message')
     // TODO: verify it was called with 'test message'
     // TODO: restore the spy
+
+    const logSpy = jest.spyOn(console, 'log').mockReturnValue();
+
+    console.log('test message');
+
+    expect(logSpy).toHaveBeenCalledWith('test message');
+
+    logSpy.mockRestore();
   });
 });
 
@@ -58,7 +86,11 @@ describe('Exercise 3: Full service test with mocks', () => {
     //       sendEmail: jest.fn().mockResolvedValue(undefined)
     //       sendWelcome: jest.fn().mockResolvedValue(undefined)
     //       getSentCount: jest.fn().mockReturnValue(0)
-    mockEmailService = {} as jest.Mocked<EmailService>;
+    mockEmailService = {
+      sendEmail: jest.fn().mockResolvedValue(undefined),
+      sendWelcome: jest.fn().mockResolvedValue(undefined),
+      getSentCount: jest.fn().mockResolvedValue(undefined)
+    } as unknown as jest.Mocked<EmailService>;
 
     mockLogger = { log: jest.fn(), error: jest.fn() };
 
@@ -68,12 +100,17 @@ describe('Exercise 3: Full service test with mocks', () => {
   test('register sends welcome email', async () => {
     // TODO: register 'Bob' with 'bob@example.com'
     // TODO: verify sendWelcome was called with the right arguments
+    const bob = userService.register('Bob', 'bob@example.com');
+
+    expect(mockEmailService.sendWelcome).toHaveBeenCalledWith('bob@example.com', 'Bob');
   });
 
   test('register does not call email on invalid input', async () => {
     // TODO: try to register with invalid email 'bademail'
     // TODO: verify it throws
     // TODO: verify sendWelcome was NOT called
+    expect(() => userService.register('Invalid', 'bademail')).rejects.toThrow();
+    expect(mockEmailService.sendWelcome).not.toHaveBeenCalled();
   });
 
   test('deleteUser returns false for missing user', async () => {
@@ -81,6 +118,9 @@ describe('Exercise 3: Full service test with mocks', () => {
     // TODO: verify it returns false
     // TODO: verify mockLogger.error was called
     // TODO: verify mockLogger.log was NOT called
+    expect(userService.deleteUser('fake-id')).resolves.toBe(false);
+    expect(mockLogger.error).toHaveBeenCalled();
+    expect(mockLogger.log).not.toHaveBeenCalled();
   });
 });
 
@@ -94,5 +134,8 @@ describe('Exercise 4: Call order assertions', () => {
     // TODO: verify it was called exactly 3 times
     // TODO: verify the 2nd call was with 'item-2' (use toHaveBeenNthCalledWith)
     // TODO: verify the last call was with 'item-3' (use toHaveBeenLastCalledWith)
+    expect(mockProcess).toHaveBeenCalledTimes(3);
+    expect(mockProcess).toHaveBeenNthCalledWith(2, 'item-2');
+    expect(mockProcess).toHaveBeenLastCalledWith('item-3');
   });
 });
