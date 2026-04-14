@@ -95,13 +95,12 @@ console.log('\n=== Exercise 4: keyof usage ===');
 function pick<T, K extends keyof T>(obj: T, keys: K[]): Pick<T, K> {
   const result = {} as Pick<T, K>;
   for (const key of keys) {
-    if (key in (obj as object)) { 
+    if (key in (obj as object)) {
       result[key] = obj[key];
     }
   }
   return result;
 }
-
 
 const user = { id: 1, name: 'Alice', email: 'a@x.com', age: 30 };
 console.log(pick(user, ['name', 'email'])); // { name: 'Alice', email: 'a@x.com' }
@@ -235,3 +234,49 @@ const city = deepGet(data, 'user.address.city'); // type: string
 console.log('City:', city); // 'Kyiv'
 
 console.log('\n✅ Exercises completed! Check your answers with a mentor.');
+
+type ApiResponse<T> = {
+  data: T;
+  status: number;
+};
+
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  isAdmin: boolean;
+};
+
+async function fetchUser(): Promise<ApiResponse<User>> {
+  return {
+    data: {
+      id: 1,
+      name: 'nazar',
+      email: 'nazar@gmail.com',
+      isAdmin: true,
+    },
+    status: 200,
+  };
+}
+
+type ExtractData<T> = T extends Promise<ApiResponse<infer Data>> ? Data : never;
+
+async function getApiField<
+  TPromise extends Promise<ApiResponse<any>>,
+  K extends keyof ExtractData<TPromise>,
+>(promise: TPromise, key: K): Promise<ExtractData<TPromise>[K]> {
+  const response = await promise;
+  return response.data[key];
+}
+
+async function run() {
+  const email = await getApiField(fetchUser(), 'email');
+  const name = await getApiField(fetchUser(), 'name');
+  const isAdmin = await getApiField(fetchUser(), 'isAdmin');
+
+  console.log(email);
+  console.log(name);
+  console.log(isAdmin);
+}
+
+run();
