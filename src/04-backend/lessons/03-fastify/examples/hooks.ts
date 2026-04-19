@@ -12,7 +12,25 @@ export {};
 
 import Fastify, { FastifyError } from 'fastify';
 
+// -------------------------------------------------------
+// Declaration merging — tell TypeScript about custom request properties
+// -------------------------------------------------------
+// When you add properties to request via decorateRequest(), TypeScript
+// doesn't know about them. "declare module" merges your types into
+// Fastify's existing interfaces, so request.startTime and request.userId
+// are properly typed — no "as any" needed.
+declare module 'fastify' {
+  interface FastifyRequest {
+    startTime: number;
+    userId: string;
+  }
+}
+
 const app = Fastify({ logger: false }); // We'll do custom logging via hooks
+
+// Register decorators BEFORE hooks that use them
+app.decorateRequest('startTime', 0);
+app.decorateRequest('userId', '');
 
 // -------------------------------------------------------
 // 1. onRequest — runs first, before body parsing
@@ -20,7 +38,7 @@ const app = Fastify({ logger: false }); // We'll do custom logging via hooks
 // Good for: request logging, early rejection, attaching request IDs
 app.addHook('onRequest', async (request, _reply) => {
   // Attach a start time to measure response time
-  (request as any).startTime = Date.now();
+  request.startTime = Date.now();  // ← properly typed, no "as any"
   console.log(`\n→ [onRequest] ${request.method} ${request.url}`);
 });
 
@@ -47,8 +65,8 @@ app.addHook('preHandler', async (request, reply) => {
 
   // Simulate token validation
   const token = authHeader.slice(7);
-  (request as any).userId = `user-from-${token}`;
-  console.log(`  [preHandler] Authenticated as ${(request as any).userId}`);
+  request.userId = `user-from-${token}`;
+  console.log(`  [preHandler] Authenticated as ${request.userId}`);
 });
 
 // -------------------------------------------------------
@@ -56,10 +74,10 @@ app.addHook('preHandler', async (request, reply) => {
 // -------------------------------------------------------
 // Good for: adding metadata to responses, wrapping response data
 app.addHook('preSerialization', async (_request, reply, payload) => {
-  console.log(`  [preSerialization] Wrapping payload`);
+  console.log('  [preSerialization] Wrapping payload');
 
   // Wrap every response in a standard envelope
-  if (typeof payload === 'object' && payload !== null && !('_wrapped' in (payload as any))) {
+  if (typeof payload === 'object' && payload !== null && !('_wrapped' in (payload as Record<string, unknown>))) {
     return {
       success: reply.statusCode < 400,
       data: payload,
@@ -86,7 +104,7 @@ app.addHook('onSend', async (_request, reply, payload) => {
 // -------------------------------------------------------
 // Good for: final logging, metrics, cleanup
 app.addHook('onResponse', async (request, reply) => {
-  const elapsed = Date.now() - ((request as any).startTime ?? Date.now());
+  const elapsed = Date.now() - request.startTime;
   console.log(`← [onResponse] ${request.method} ${request.url} → ${reply.statusCode} (${elapsed}ms)`);
 });
 
@@ -107,7 +125,7 @@ app.get('/health', async () => {
 app.get('/api/protected', async (request) => {
   return {
     message: 'You have access!',
-    userId: (request as any).userId,
+    userId: request.userId,  // ← typed via declaration merging
   };
 });
 
@@ -115,7 +133,7 @@ app.post<{ Body: { value: number } }>('/api/data', async (request) => {
   return {
     received: request.body.value,
     doubled: request.body.value * 2,
-    userId: (request as any).userId,
+    userId: request.userId,
   };
 });
 

@@ -2,8 +2,7 @@ export {};
 // ============================================
 // DEPENDENCY INJECTION Example
 // ============================================
-//
-// ⚠️  Run from santa-api/:  cd santa-api && npx ts-node examples/04-nestjs-fundamentals/dependency-injection.ts
+// Run from santa-api/:  npx ts-node examples/04-nestjs-fundamentals/dependency-injection.ts
 //
 // Demonstrates how NestJS DI container resolves dependencies.
 // The controller depends on the service, and the service depends on a repository.

@@ -2,8 +2,7 @@ export {};
 // ============================================
 // MODULE STRUCTURE Example
 // ============================================
-//
-// ⚠️  Run from santa-api/:  cd santa-api && npx ts-node examples/04-nestjs-fundamentals/module-structure.ts
+// Run from santa-api/:  npx ts-node examples/04-nestjs-fundamentals/module-structure.ts
 //
 // Demonstrates multi-module NestJS app with imports/exports.
 // - SharedModule exports a ConfigService used by multiple modules

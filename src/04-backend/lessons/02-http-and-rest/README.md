@@ -120,6 +120,24 @@ GET    /api/users/42/rooms  ← list rooms for user 42 (sub-resource)
 - Nest for relationships: `/api/rooms/5/members`
 - Use query params for filtering/sorting: `/api/users?role=admin&sort=name`
 
+### HATEOAS (Bonus Concept)
+
+HATEOAS (Hypermedia as the Engine of Application State) is a REST constraint where the server includes links to related actions in its responses:
+
+```json
+{
+  "id": 42,
+  "name": "Alice",
+  "_links": {
+    "self": "/api/users/42",
+    "rooms": "/api/users/42/rooms",
+    "delete": "/api/users/42"
+  }
+}
+```
+
+In practice, most REST APIs skip HATEOAS — but it's useful to know the concept exists. You may encounter it in enterprise APIs or during interviews.
+
 ### Content Negotiation
 
 The client tells the server what format it expects:
@@ -185,44 +203,8 @@ server.listen(3000);
 
 2. **Complete exercises**:
    ```bash
-   # Design exercise (markdown):
-   # Open src/04-backend/lessons/02-http-and-rest/exercises/rest-api-design.md
-   # and fill in the TODO sections
-
-   # Coding exercise:
+   # Coding: REST-compliant CRUD server with PUT vs PATCH, Location header, 409 Conflict:
    npx ts-node src/04-backend/lessons/02-http-and-rest/exercises/crud-server.ts
    ```
-
-## App Task
-
-Design the complete REST API contract for both Secret Santa services. Document every planned endpoint:
-
-**santa-api (port 3001):**
-
-| Method | Endpoint | Description | Status Codes |
-|--------|----------|-------------|--------------|
-| POST | /api/auth/register | Register a new user | 201, 400, 409 |
-| POST | /api/auth/login | Login and get JWT | 200, 401 |
-| GET | /api/users/me | Get current user profile | 200, 401 |
-| PATCH | /api/users/me | Update current user profile | 200, 400, 401 |
-| POST | /api/rooms | Create a new room | 201, 400, 401 |
-| GET | /api/rooms | List rooms for current user | 200, 401 |
-| GET | /api/rooms/:id | Get room details | 200, 401, 404 |
-| POST | /api/rooms/:id/join | Join a room by invite code | 200, 400, 401, 404 |
-| POST | /api/rooms/:id/draw | Trigger Secret Santa draw | 200, 400, 401, 403 |
-| GET | /api/rooms/:id/assignment | Get my assignment for a room | 200, 401, 404 |
-| PUT | /api/rooms/:id/wishlist | Set my wishlist for a room | 200, 400, 401 |
-| GET | /api/rooms/:id/wishlist/:userId | Get a user's wishlist | 200, 401, 404 |
-
-**santa-notifications (port 3002):**
-
-| Method | Endpoint | Description | Status Codes |
-|--------|----------|-------------|--------------|
-| GET | /health | Health check | 200 |
-| POST | /api/notifications | Create a notification | 201, 400 |
-| GET | /api/notifications/:userId | Get notifications for a user | 200 |
-| PATCH | /api/notifications/:id/read | Mark notification as read | 200, 404 |
-| POST | /api/messages | Send an anonymous message | 201, 400 |
-| GET | /api/messages/:roomId/:userId | Get messages for user in room | 200 |
-
-Create a document (e.g., `docs/api-contract.md` in each project root) describing all endpoints with request/response examples.
+   - [exercises/rest-api-design.md](exercises/rest-api-design.md) — design REST endpoints for a Library domain
+   - [exercises/app-task.md](exercises/app-task.md) — add notifications CRUD to `santa-notifications`

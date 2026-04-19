@@ -3,7 +3,7 @@ export {};
 // ============================================
 // MINI CRUD Exercise
 // ============================================
-// ⚠️  Run from santa-api/:  cd santa-api && npx ts-node exercises/04-nestjs-fundamentals/mini-crud.ts
+// Run from santa-api/:  npx ts-node exercises/04-nestjs-fundamentals/mini-crud.ts
 //
 // Build a complete CRUD API for a "products" resource using NestJS.
 //

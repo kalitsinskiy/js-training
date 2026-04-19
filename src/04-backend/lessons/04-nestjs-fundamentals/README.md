@@ -239,16 +239,24 @@ create(@Body() dto: CreateItemDto) {
 
 ## How to Work
 
-1. **Study examples**:
+> **Important:** NestJS examples and exercises must run from the `santa-api/` directory.
+> NestJS depends on `reflect-metadata`, `rxjs`, and a `tsconfig.json` with `"emitDecoratorMetadata": true` —
+> all of which are set up inside `santa-api/`. Running from the repo root will fail.
+>
+> **Note:** First run takes ~10 seconds — `ts-node` compiles NestJS + all its dependencies on cold start. Subsequent runs are faster.
+
+1. **Study examples** (run from `santa-api/`):
    ```bash
-   npx ts-node src/04-backend/lessons/04-nestjs-fundamentals/examples/basic-controller.ts
-   npx ts-node src/04-backend/lessons/04-nestjs-fundamentals/examples/dependency-injection.ts
-   npx ts-node src/04-backend/lessons/04-nestjs-fundamentals/examples/module-structure.ts
+   cd santa-api
+   npx ts-node examples/04-nestjs-fundamentals/basic-controller.ts
+   npx ts-node examples/04-nestjs-fundamentals/dependency-injection.ts
+   npx ts-node examples/04-nestjs-fundamentals/module-structure.ts
    ```
 
-2. **Complete exercises**:
+2. **Complete exercises** (run from `santa-api/`):
    ```bash
-   npx ts-node src/04-backend/lessons/04-nestjs-fundamentals/exercises/mini-crud.ts
+   cd santa-api
+   npx ts-node exercises/04-nestjs-fundamentals/mini-crud.ts
    ```
 
 3. **Answer** `QUESTIONS.md` for self-evaluation.

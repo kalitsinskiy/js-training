@@ -13,14 +13,27 @@ import Fastify, { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import fp from 'fastify-plugin';
 
 // -------------------------------------------------------
-// 1. Database plugin (shared via fp)
+// Type declarations — tell TypeScript about our custom decorators
 // -------------------------------------------------------
-// This plugin simulates a database connection.
-// We use fp() so the decorator is available to ALL sibling plugins.
+// This is "declaration merging": we extend Fastify's built-in
+// FastifyInstance interface with our own properties. After this,
+// fastify.db and fastify.config are properly typed everywhere.
 
 interface DbStore {
   items: Array<{ id: number; name: string }>;
   nextId: number;
+}
+
+interface AppConfig {
+  env: string;
+  appName: string;
+}
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    db: DbStore;
+    config: AppConfig;
+  }
 }
 
 async function dbPlugin(fastify: FastifyInstance, _opts: FastifyPluginOptions) {
@@ -38,11 +51,6 @@ const dbPluginWrapped = fp(dbPlugin, { name: 'db-plugin' });
 // -------------------------------------------------------
 // 2. Config plugin (shared via fp)
 // -------------------------------------------------------
-interface AppConfig {
-  env: string;
-  appName: string;
-}
-
 async function configPlugin(fastify: FastifyInstance, _opts: FastifyPluginOptions) {
   const config: AppConfig = {
     env: process.env.NODE_ENV ?? 'development',
@@ -60,7 +68,8 @@ const configPluginWrapped = fp(configPlugin, { name: 'config-plugin' });
 // -------------------------------------------------------
 async function itemRoutes(fastify: FastifyInstance, _opts: FastifyPluginOptions) {
   // fastify.db is available because dbPlugin used fp()
-  const db = (fastify as any).db as DbStore;
+  // Thanks to declaration merging above, this is properly typed — no "as any" needed.
+  const { db } = fastify;
 
   fastify.get('/', async () => {
     return { items: db.items };
@@ -91,7 +100,7 @@ async function itemRoutes(fastify: FastifyInstance, _opts: FastifyPluginOptions)
 // 4. Health routes plugin
 // -------------------------------------------------------
 async function healthRoutes(fastify: FastifyInstance, _opts: FastifyPluginOptions) {
-  const config = (fastify as any).config as AppConfig;
+  const { config } = fastify;
 
   fastify.get('/health', async () => {
     return {

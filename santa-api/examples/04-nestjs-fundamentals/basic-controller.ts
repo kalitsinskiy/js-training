@@ -2,12 +2,7 @@ export {};
 // ============================================
 // BASIC CONTROLLER Example
 // ============================================
-//
-// ⚠️  NestJS examples must run from the santa-api/ directory (which has the
-//     correct tsconfig and NestJS dependencies). The runnable copy lives at:
-//     santa-api/examples/04-nestjs-fundamentals/basic-controller.ts
-//
-// Run:  cd santa-api && npx ts-node examples/04-nestjs-fundamentals/basic-controller.ts
+// Run from santa-api/:  npx ts-node examples/04-nestjs-fundamentals/basic-controller.ts
 //
 // This example creates a minimal NestJS app with a single controller
 // that handles GET and POST requests for a "books" resource.

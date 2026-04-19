@@ -168,6 +168,23 @@ nvm use              # reads .nvmrc and switches to that version
 nvm install          # installs the version from .nvmrc
 ```
 
+### The `node:` Protocol Prefix
+
+Since Node.js 16+, built-in modules can be imported with a `node:` prefix:
+
+```javascript
+// Both work, but node: prefix is recommended:
+import * as http from 'http';        // legacy — works but ambiguous
+import * as http from 'node:http';   // explicit — clearly a built-in module
+```
+
+Why use `node:` prefix?
+- **Clarity** -- makes it obvious the import is a Node.js built-in, not an npm package
+- **Safety** -- prevents a malicious npm package named `http` from being loaded instead
+- **Convention** -- all modern Node.js docs and frameworks use it
+
+Throughout this course, we use `node:` prefix for all built-in modules.
+
 ### Creating an HTTP Server
 
 Node.js has a built-in `http` module -- no packages needed:
@@ -206,24 +223,16 @@ server.listen(3000, () => {
 
 2. **Complete exercises**:
    ```bash
+   # HTTP server with in-memory CRUD:
    npx ts-node src/04-backend/lessons/01-nodejs-and-npm/exercises/server.ts
+
+   # CJS modules:
+   node src/04-backend/lessons/01-nodejs-and-npm/exercises/modules-cjs/app.js
+
+   # ESM modules:
+   node src/04-backend/lessons/01-nodejs-and-npm/exercises/modules-esm/app.mjs
    ```
 
 ## App Task
 
-Initialize both Secret Santa backend services:
-
-**santa-api** (NestJS + Fastify adapter, port 3001):
-1. Create a new NestJS project: `npx @nestjs/cli new santa-api`
-2. Install the Fastify adapter: `npm install @nestjs/platform-fastify`
-3. Replace the default Express adapter with Fastify in `main.ts`
-4. Add a `GET /health` endpoint that returns `{ status: "ok" }`
-5. Configure the app to listen on port 3001
-
-**santa-notifications** (raw Fastify, port 3002):
-1. Create a new directory `santa-notifications` and run `npm init -y`
-2. Install dependencies: `npm install fastify` and `npm install -D typescript @types/node ts-node`
-3. Create a basic Fastify server with a `GET /health` endpoint returning `{ status: "ok" }`
-4. Configure the app to listen on port 3002
-
-Both services should start without errors and respond to `curl http://localhost:<port>/health`.
+See [exercises/app-task.md](exercises/app-task.md) — initialize both Secret Santa backend services at the **repo root**.

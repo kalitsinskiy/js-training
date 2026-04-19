@@ -210,6 +210,26 @@ fastify.decorateReply('sendSuccess', function(data: unknown) {
 });
 ```
 
+### Declaration Merging (TypeScript)
+
+When you add custom decorators, TypeScript doesn't know about them — `fastify.config` or `request.userId` will be a type error. **Declaration merging** solves this by extending Fastify's built-in interfaces with your custom properties:
+
+```typescript
+// Tell TypeScript: "FastifyInstance also has a `config` property"
+declare module 'fastify' {
+  interface FastifyInstance {
+    config: { port: number; env: string };
+  }
+  interface FastifyRequest {
+    userId: string;
+  }
+}
+```
+
+After this declaration, `fastify.config.port` and `request.userId` are properly typed everywhere — no `as any` casts needed. Place these declarations at the top of the file where the decorator is defined (usually the plugin file).
+
+**Why not just use `as any`?** It works, but you lose type safety — a typo like `request.usrId` won't be caught. Declaration merging is the standard Fastify + TypeScript pattern.
+
 ### Register / After / Ready
 
 ```typescript
@@ -289,51 +309,34 @@ app.setNotFoundHandler((request, reply) => {
 - [Fastify TypeScript](https://fastify.dev/docs/latest/Reference/TypeScript/)
 - [fastify-plugin (fp)](https://github.com/fastify/fastify-plugin)
 
+### Readable Logs with pino-pretty
+
+Fastify's built-in Pino logger outputs structured JSON — great for production, hard to read during development. Pipe through `pino-pretty` for human-friendly output:
+
+```bash
+npm install -D pino-pretty
+
+# Pipe any Fastify server through pino-pretty:
+npx ts-node src/server.ts | npx pino-pretty
+
+# Output changes from:
+#   {"level":30,"time":1234,"msg":"Server listening at http://localhost:3000"}
+# To:
+#   [12:34:56] INFO: Server listening at http://localhost:3000
+```
+
+> Tip: use `pino-pretty` only in development. In production, keep raw JSON for log aggregation tools (ELK, Datadog, etc.).
+
 ## How to Work
 
-1. **Study examples**:
-   ```bash
-   npx ts-node src/04-backend/lessons/03-fastify/examples/basic-server.ts
-   npx ts-node src/04-backend/lessons/03-fastify/examples/plugins.ts
-   npx ts-node src/04-backend/lessons/03-fastify/examples/hooks.ts
-   ```
+1. **Study examples** (read the code, apply patterns in the app task):
+   - `examples/basic-server.ts` — typed routes, JSON Schema validation, 404 handler
+   - `examples/plugins.ts` — plugin registration, `fp()`, encapsulation, decorators
+   - `examples/hooks.ts` — lifecycle hooks (onRequest, preHandler, onSend, onResponse)
 
 2. **Complete exercises**:
    ```bash
-   npx ts-node src/04-backend/lessons/03-fastify/exercises/mini-crud.ts
+   # Bookmarks API with plugin architecture, fp(), hooks, schema validation:
+   npx ts-node src/04-backend/lessons/03-fastify/exercises/plugin-server.ts
    ```
-
-## App Task
-
-Restructure the `santa-notifications` service (from lesson 01) into a proper Fastify plugin architecture:
-
-1. **Config plugin** (`plugins/config.ts`):
-   - Use `fastify-plugin` to share config across all plugins
-   - Decorate the instance with a `config` object: `{ port: number, env: string }`
-   - Read values from `process.env` with sensible defaults
-
-2. **Routes plugin** (`routes/health.ts`):
-   - Move the `/health` endpoint into its own route plugin
-   - Register it with prefix if desired
-
-3. **Request logging hook** (`plugins/request-logger.ts`):
-   - Add an `onResponse` hook that logs: method, URL, status code, and response time
-   - Use `fastify-plugin` so it applies globally
-
-4. **App entry point** (`src/app.ts`):
-   - Create and export a `buildApp()` function that assembles the Fastify instance
-   - Register config plugin, request logger plugin, and routes plugin in order
-   - Keep `src/server.ts` as the entry that calls `buildApp()` and then `listen()`
-
-The file structure should look like:
-```
-santa-notifications/
-  src/
-    app.ts              ← buildApp() factory
-    server.ts           ← entry point, calls buildApp + listen
-    plugins/
-      config.ts         ← config decorator (uses fp)
-      request-logger.ts ← onResponse hook (uses fp)
-    routes/
-      health.ts         ← GET /health
-```
+   - [exercises/app-task.md](exercises/app-task.md) — add hooks, schema validation, and error handling to `santa-notifications`

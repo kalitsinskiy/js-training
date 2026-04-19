@@ -8,6 +8,21 @@ Before starting this section, you should have completed:
 - **Block 2**: TypeScript (6 lessons)
 - **Block 3**: Testing with Jest (6 lessons)
 
+## The Project: Secret Santa
+
+Throughout the backend and frontend blocks, you will build a **Secret Santa** application — a web app where users can create rooms, invite friends, set wishlists, randomly draw gift assignments, and send anonymous messages.
+
+You'll build **two backend microservices**:
+
+| Service | Framework | Port | What it does |
+|---------|-----------|------|-------------|
+| **santa-api** | NestJS + Fastify adapter | 3001 | Main API: auth, users, rooms, wishlists, assignments |
+| **santa-notifications** | Raw Fastify | 3002 | Notifications, anonymous messages, real-time push |
+
+These two services communicate via RabbitMQ (async events) and HTTP (sync calls). The frontend will be a React SPA (built in Block 05).
+
+Each lesson includes standalone exercises for practice **and** an app task where you implement a real feature in one of the services. By the end of Block 04, you'll have two working backends with auth, MongoDB, and a full REST API.
+
 ## What You'll Learn
 
 - How Node.js works under the hood (event loop, modules, npm)
