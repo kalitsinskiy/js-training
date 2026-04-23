@@ -39,6 +39,7 @@ function patchArticle(article: Article, update: ArticleUpdate): Article {
   };
 }
 
+<<<<<<< HEAD
 const article: Article = {
   id: 'a1',
   title: 'Hello',
@@ -51,6 +52,14 @@ const article: Article = {
 };
 const patched = patchArticle(article, { title: 'Updated Title', published: true });
 console.log(patched.title, patched.published);
+=======
+// const article: Article = {
+//   id: 'a1', title: 'Hello', body: 'World', authorId: 'u1',
+//   tags: [], published: false, createdAt: new Date(), updatedAt: new Date()
+// };
+// const patched = patchArticle(article, { title: 'Updated Title', published: true });
+// console.log(patched.title, patched.published);
+>>>>>>> 2367512d4b97d35ea64f250f808568d2d2ba929a
 
 console.log('\n=== Exercise 2: Pick for API responses ===');
 // TODO: Create these types using Pick:
@@ -91,6 +100,7 @@ type CreateAuthorDto = Omit<Author, 'id'>;
 function createArticle(dto: CreateArticleDto): Article {
   const now = new Date();
 
+<<<<<<< HEAD
   return {
     ...dto,
     id: `art_${Math.random().toString(36).substr(2, 9)}`,
@@ -109,6 +119,8 @@ const dto: CreateArticleDto = {
 const newArticle = createArticle(dto);
 console.log(newArticle.id, newArticle.createdAt);
 
+=======
+>>>>>>> 2367512d4b97d35ea64f250f808568d2d2ba929a
 console.log('\n=== Exercise 4: Record ===');
 // TODO: Create the following using Record:
 //   a) 'ArticleById': maps article id (string) to Article
@@ -129,6 +141,7 @@ const permissions: RoleToPermissions = {
   viewer: ['read'],
 };
 
+<<<<<<< HEAD
 function hasPermission(role: Role, action: string): boolean {
   const roleActions = permissions[role];
   return roleActions.includes(action);
@@ -138,6 +151,8 @@ console.log(hasPermission('editor', 'delete')); // false
 console.log(hasPermission('admin', 'delete')); // true
 console.log(hasPermission('viewer', 'read')); // true
 
+=======
+>>>>>>> 2367512d4b97d35ea64f250f808568d2d2ba929a
 console.log('\n=== Exercise 5: Exclude and Extract ===');
 // TODO: Given the union below:
 type EventType =
@@ -162,11 +177,14 @@ type MouseEvents = Extract<EventType, `mouse${string}`>;
 type NonMouseEvents = Exclude<EventType, `mouse${string}`>;
 type FocusEvents = Extract<EventType, 'focus' | 'blur'>;
 
+<<<<<<< HEAD
 const kEvent: KeyboardEvents = 'keydown'; // ✅
 const mEvent: MouseEvents = 'mouseenter'; // ✅
 const otherEvent: NonMouseEvents = 'click'; // ✅
 // const invalid: MouseEvents = 'click'; // ❌ Помилка: 'click' не підходить під `mouse${string}`
 
+=======
+>>>>>>> 2367512d4b97d35ea64f250f808568d2d2ba929a
 console.log('\n=== Exercise 6: ReturnType and Parameters ===');
 // TODO: Given these functions (don't modify them):
 
@@ -197,10 +215,16 @@ type LoadedResult = Awaited<ReturnType<typeof loadAuthorWithArticles>>;
 type ArticleList = LoadedResult['articles'];
 
 // Verify:
+<<<<<<< HEAD
 const param: SearchFirstParam = 'typescript';
 const result: SearchResult = [];
 const loaded: LoadedResult = { author: {} as Author, articles: [] };
 const list: ArticleList = result;
+=======
+// const param: SearchFirstParam = 'typescript';
+// const result: SearchResult = [];
+// const loaded: LoadedResult = { author: {} as Author, articles: [] };
+>>>>>>> 2367512d4b97d35ea64f250f808568d2d2ba929a
 
 console.log('\n=== Exercise 7: Readonly for immutability ===');
 // TODO: Write a function 'freeze<T>(obj: T): Readonly<T>'

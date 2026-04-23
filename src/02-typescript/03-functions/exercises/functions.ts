@@ -50,9 +50,15 @@ function formatCurrency(
     : `${formattedNumber} ${currency}`;
 }
 
+<<<<<<< HEAD
 console.log(formatCurrency(1234.5)); // '1,234.50 USD'
 console.log(formatCurrency(1234.5, 'EUR', 2)); // '1,234.50 EUR'
 console.log(formatCurrency(9.99, 'USD', 2, '$')); // '$9.99'
+=======
+// console.log(formatCurrency(1234.5));           // '1,234.50 USD'
+// console.log(formatCurrency(1234.5, 'EUR', 2)); // '1,234.50 EUR'
+// console.log(formatCurrency(9.99, 'USD', 2, '$')); // '$9.99'
+>>>>>>> 2367512d4b97d35ea64f250f808568d2d2ba929a
 
 console.log('\n=== Exercise 3: Rest parameters ===');
 // TODO: Write a function 'mergeObjects' that accepts any number of objects
@@ -64,8 +70,13 @@ function mergeObjects<T extends object>(...objects: T[]): T {
   return Object.assign({}, ...objects);
 }
 
+<<<<<<< HEAD
 const merged = mergeObjects({ a: 1 }, { b: 2 }, { a: 10, c: 3 });
 console.log(merged); // { a: 10, b: 2, c: 3 }
+=======
+// const merged = mergeObjects({ a: 1 }, { b: 2 }, { a: 10, c: 3 });
+// console.log(merged); // { a: 10, b: 2, c: 3 }
+>>>>>>> 2367512d4b97d35ea64f250f808568d2d2ba929a
 
 console.log('\n=== Exercise 4: Function type alias ===');
 // TODO: Create a type alias 'Validator<T>' for a function that:
@@ -85,6 +96,7 @@ const isNonEmpty: Validator<string> = (value) => {
     return { valid: false, message: 'Sttring is empty' };
   }
 
+<<<<<<< HEAD
   return { valid: true };
 };
 
@@ -101,6 +113,8 @@ console.log(isNonEmpty('hello')); // { valid: true }
 console.log(isPositive(-1)); // { valid: false, message: '...' }
 console.log(isPositive(5)); // { valid: true }
 
+=======
+>>>>>>> 2367512d4b97d35ea64f250f808568d2d2ba929a
 console.log('\n=== Exercise 5: Overloads ===');
 // TODO: Write an overloaded function 'repeat':
 //   - repeat(str: string, times: number): string  — repeats the string
@@ -117,12 +131,15 @@ function repeat(value: string | number[], times: number): string | number[] {
     return value.repeat(times);
   }
 
+<<<<<<< HEAD
   return Array(times).fill(value).flat();
 }
 
 console.log(repeat('ab', 3)); // 'ababab'
 console.log(repeat([1, 2], 3)); // [1, 2, 1, 2, 1, 2]
 
+=======
+>>>>>>> 2367512d4b97d35ea64f250f808568d2d2ba929a
 console.log('\n=== Exercise 6: Higher-order functions ===');
 // TODO: Write a function 'memoize' that:
 //   - takes a function f: (x: number) => number
@@ -141,6 +158,7 @@ function memoize(fn: (x: number) => number): (x: number) => number {
       const result = fn(x);
       cache[x] = result;
 
+<<<<<<< HEAD
       return result;
     }
   };
@@ -156,6 +174,8 @@ console.log(expensive(5)); // 25 (cached)
 console.log(expensive(3)); // 9
 console.log('Calls made:', callCount); // 2 (not 3!)
 
+=======
+>>>>>>> 2367512d4b97d35ea64f250f808568d2d2ba929a
 console.log('\n=== Exercise 7: never for exhaustive checks ===');
 // TODO: Create a type 'Shape':
 //   - { kind: 'circle'; radius: number }
@@ -180,6 +200,7 @@ function area(shape: Shape): number {
       const area = Math.PI * shape.radius ** 2;
       return parseFloat(area.toFixed(2));
 
+<<<<<<< HEAD
     case 'rectangle':
       return shape.width * shape.height;
 
@@ -195,6 +216,8 @@ console.log(area({ kind: 'circle', radius: 5 }));
 console.log(area({ kind: 'rectangle', width: 4, height: 6 }));
 console.log(area({ kind: 'triangle', base: 3, height: 4 }));
 
+=======
+>>>>>>> 2367512d4b97d35ea64f250f808568d2d2ba929a
 console.log('\n=== 🎯 Challenge: Pipeline ===');
 // TODO: Build a simple data pipeline using function types:
 //
