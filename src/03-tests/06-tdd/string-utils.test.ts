@@ -1,4 +1,12 @@
-import { capitalize, camelToKebab, truncate, countWords, isPalindrome, repeat } from './string-utils';
+import {
+  capitalize,
+  camelToKebab,
+  truncate,
+  countWords,
+  isPalindrome,
+  repeat,
+} from './string-utils';
+import { describe, expect, test, jest, beforeEach, beforeAll, afterAll } from '@jest/globals';
 
 // ============================================
 // TDD EXERCISE — Tests are written, you implement!

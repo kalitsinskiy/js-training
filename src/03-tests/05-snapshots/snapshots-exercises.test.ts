@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { formatUser, formatApiError, generateReport } from './formatter';
 import type { User, ApiError, ReportRow } from './formatter';
+import { describe, expect, test, jest, beforeEach, beforeAll, afterAll } from '@jest/globals';
 
 // ============================================
 // EXERCISES — Snapshots
@@ -20,6 +21,9 @@ describe('Exercise 1: Basic snapshot', () => {
     // TODO: call formatUser(user) and use toMatchSnapshot()
     // Run the test once to create the snapshot
     // Then run again — it should pass
+
+    const result = formatUser(user);
+    expect(result).toMatchSnapshot();
   });
 
   test('formatApiError matches snapshot', () => {
@@ -30,6 +34,11 @@ describe('Exercise 1: Basic snapshot', () => {
     };
 
     // TODO: call formatApiError(error) and use toMatchSnapshot()
+
+    const result = formatApiError(error);
+    expect(result).toMatchSnapshot({
+      timestamp: expect.any(String),
+    });
   });
 });
 
@@ -42,6 +51,20 @@ describe('Exercise 2: Named snapshot', () => {
     // Run once to create, run again to verify
     // Note: toMatchInlineSnapshot() (auto-fills inline) is shown in the examples file
     // but requires an older Prettier version to work automatically
+
+    const rows: ReportRow[] = [
+      { label: 'Revenue', value: 5000 },
+      { label: 'Costs', value: 3000 },
+    ];
+    const result = generateReport('Q1 Report', rows);
+    expect(result).toMatchSnapshot(
+      {
+        summary: {
+          generated: expect.any(String),
+        },
+      },
+      'Q1 report shape'
+    );
   });
 });
 
@@ -56,6 +79,7 @@ describe('Exercise 3: Know when NOT to use snapshots', () => {
 
     // TODO: instead of snapshot, use toBe to check report.summary.total === 300
     // Why? A snapshot for a single number is overkill
+    expect(report.summary.total).toBe(300);
   });
 
   test('use toMatchObject for partial shape validation', () => {
@@ -64,7 +88,7 @@ describe('Exercise 3: Know when NOT to use snapshots', () => {
       name: 'Charlie',
       email: 'charlie@example.com',
       role: 'guest',
-      createdAt: new Date(),  // dynamic — changes every run!
+      createdAt: new Date(), // dynamic — changes every run!
     };
 
     const formatted = formatUser(user) as Record<string, unknown>;
@@ -74,6 +98,11 @@ describe('Exercise 3: Know when NOT to use snapshots', () => {
     //   - accessLevel is 'guest'
     //   - isAdmin is false
     // Why? Because memberSince is derived from createdAt which is dynamic
+    expect(formatted).toMatchObject({
+      displayName: 'Charlie',
+      accessLevel: 'guest',
+      isAdmin: false,
+    });
   });
 });
 
@@ -88,6 +117,7 @@ describe('Exercise 4: Snapshot update workflow', () => {
       createdAt: new Date('2020-01-01'),
     };
 
+    const result = formatUser(adminUser);
     // TODO: create a snapshot for formatUser(adminUser)
     // After you run it once and it passes, try this:
     // 1. Change the formatter to add a new field, e.g., prefix: 'ADMIN:'
@@ -95,5 +125,6 @@ describe('Exercise 4: Snapshot update workflow', () => {
     // 3. Review the diff in the output
     // 4. Run: npx jest --updateSnapshot to update it
     // This is the snapshot update workflow
+    expect(result).toMatchSnapshot();
   });
 });

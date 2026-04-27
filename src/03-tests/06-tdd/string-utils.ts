@@ -11,7 +11,7 @@
 // capitalize('already') → 'Already'
 export function capitalize(_str: string): string {
   // TODO: implement
-  throw new Error('Not implemented');
+  return _str.charAt(0).toUpperCase() + _str.slice(1);
 }
 
 // 2. Convert camelCase to kebab-case
@@ -20,7 +20,7 @@ export function capitalize(_str: string): string {
 // camelToKebab('already') → 'already'
 export function camelToKebab(_str: string): string {
   // TODO: implement
-  throw new Error('Not implemented');
+  return _str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
 // 3. Truncate a string to maxLength, adding '...' if cut
@@ -29,7 +29,13 @@ export function camelToKebab(_str: string): string {
 // truncate('Hello', 5) → 'Hello'  (exact length — no truncation)
 export function truncate(_str: string, _maxLength: number): string {
   // TODO: implement
-  throw new Error('Not implemented');
+  if (_str.length <= _maxLength) {
+    return _str;
+  }
+  if (_maxLength === 0) {
+    return '...';
+  }
+  return _str.slice(0, _maxLength - 3) + '...';
 }
 
 // 4. Count words in a string (split by whitespace)
@@ -39,7 +45,7 @@ export function truncate(_str: string, _maxLength: number): string {
 // countWords('   ') → 0
 export function countWords(_str: string): number {
   // TODO: implement
-  throw new Error('Not implemented');
+  return _str.trim() === '' ? 0 : _str.trim().split(/\s+/).length;
 }
 
 // 5. Check if a string is a palindrome (case-insensitive, ignore spaces)
@@ -49,7 +55,9 @@ export function countWords(_str: string): number {
 // isPalindrome('') → true
 export function isPalindrome(_str: string): boolean {
   // TODO: implement
-  throw new Error('Not implemented');
+  const cleaned = _str.replace(/\s/g, '').toLowerCase();
+  const reversed = cleaned.split('').reverse().join('');
+  return cleaned === reversed;
 }
 
 // 6. Repeat a string n times with optional separator
@@ -59,5 +67,12 @@ export function isPalindrome(_str: string): boolean {
 // repeat('x', 0) → ''
 export function repeat(_str: string, _times: number, _sep = ''): string {
   // TODO: implement
-  throw new Error('Not implemented');
+  if (_times === 0) {
+    return '';
+  }
+  let result = _str;
+  for (let i = 1; i < _times; i++) {
+    result += _sep + _str;
+  }
+  return result;
 }
