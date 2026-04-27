@@ -34,6 +34,9 @@ console.log('\n=== Exercise 2: Optional and default parameters ===');
 
 // Your function here:
 
+// console.log(formatCurrency(1234.5));           // '1,234.50 USD'
+// console.log(formatCurrency(1234.5, 'EUR', 2)); // '1,234.50 EUR'
+// console.log(formatCurrency(9.99, 'USD', 2, '$')); // '$9.99'
 function formatCurrency(
   amount: number,
   currency: string = 'USD',
@@ -61,6 +64,8 @@ console.log('\n=== Exercise 3: Rest parameters ===');
 
 // Your function here:
 
+// const merged = mergeObjects({ a: 1 }, { b: 2 }, { a: 10, c: 3 });
+// console.log(merged); // { a: 10, b: 2, c: 3 }
 function mergeObjects<T extends object>(...objects: T[]): T {
   return Object.assign({}, ...objects);
 }
@@ -78,9 +83,11 @@ console.log('\n=== Exercise 4: Function type alias ===');
 
 // Your code here:
 
-type Validator<T> = (
-  value: T
-) => { valid: true } | { valid: false; message: string };
+// console.log(isNonEmpty(''));       // { valid: false, message: '...' }
+// console.log(isNonEmpty('hello'));  // { valid: true }
+// console.log(isPositive(-1));       // { valid: false, message: '...' }
+// console.log(isPositive(5));        // { valid: true }
+type Validator<T> = (value: T) => { valid: true } | { valid: false; message: string };
 
 const isNonEmpty: Validator<string> = (value) => {
   if (value.trim() === '') {
@@ -109,6 +116,9 @@ console.log('\n=== Exercise 5: Overloads ===');
 //          repeat([1, 2], 3) => [1, 2, 1, 2, 1, 2]
 
 // Your overloads and implementation here:
+
+// console.log(repeat('ab', 3));      // 'ababab'
+// console.log(repeat([1, 2], 3));    // [1, 2, 1, 2, 1, 2]
 function repeat(str: string, times: number): string;
 function repeat(arr: number[], times: number): number[];
 function repeat(value: string | number[], times: number): string | number[] {
@@ -130,6 +140,16 @@ console.log('\n=== Exercise 6: Higher-order functions ===');
 //   - if called again with the same input, returns cached result
 
 // Your function here:
+
+// let callCount = 0;
+// const expensive = memoize((n: number) => {
+//   callCount++;
+//   return n * n;
+// });
+// console.log(expensive(5)); // 25
+// console.log(expensive(5)); // 25 (cached)
+// console.log(expensive(3)); // 9
+// console.log('Calls made:', callCount); // 2 (not 3!)
 function memoize(f: (x: number) => number): (x: number) => number {
   const cache: Record<number, number> = {};
   return (x: number) => {
@@ -166,6 +186,9 @@ function assertNever(_value: never): never {
 
 // Your code here:
 
+// console.log(area({ kind: 'circle', radius: 5 }));
+// console.log(area({ kind: 'rectangle', width: 4, height: 6 }));
+// console.log(area({ kind: 'triangle', base: 3, height: 4 }));
 type Shape =
   | { kind: 'circle'; radius: number }
   | { kind: 'rectangle'; width: number; height: number }
@@ -208,22 +231,15 @@ console.log('\n=== 🎯 Challenge: Pipeline ===');
 
 type Step<T, U> = (input: T) => U;
 
-function pipe<A, B, C, D>(
-  value: A,
-  step1: Step<A, B>,
-  step2: Step<B, C>,
-  step3: Step<C, D>
-): D {
+function pipe<A, B, C, D>(value: A, step1: Step<A, B>, step2: Step<B, C>, step3: Step<C, D>): D {
   return step3(step2(step1(value)));
 }
 
 const parse: Step<string, number[]> = (input) => input.split(',').map(Number);
 
-const filterPositive: Step<number[], number[]> = (arr) =>
-  arr.filter((n) => n > 0);
+const filterPositive: Step<number[], number[]> = (arr) => arr.filter((n) => n > 0);
 
-const sumAll: Step<number[], number> = (arr) =>
-  arr.reduce((sum, n) => sum + n, 0);
+const sumAll: Step<number[], number> = (arr) => arr.reduce((sum, n) => sum + n, 0);
 
 console.log(pipe('1,-2,3,-4,5', parse, filterPositive, sumAll));
 

@@ -31,6 +31,12 @@ console.log('=== Exercise 1: Partial for updates ===');
 
 // Your code here:
 
+// const article: Article = {
+//   id: 'a1', title: 'Hello', body: 'World', authorId: 'u1',
+//   tags: [], published: false, createdAt: new Date(), updatedAt: new Date()
+// };
+// const patched = patchArticle(article, { title: 'Updated Title', published: true });
+// console.log(patched.title, patched.published);
 type ArticleUpdate = Partial<Omit<Article, 'id' | 'createdAt' | 'authorId'>>;
 
 function patchArticle(article: Article, update: ArticleUpdate): Article {
@@ -84,6 +90,12 @@ console.log('\n=== Exercise 3: Omit for create DTOs ===');
 // Write 'createArticle(dto: CreateArticleDto): Article' that auto-assigns id + timestamps
 
 // Your code here:
+
+// const dto: CreateArticleDto = {
+//   title: 'New Post', body: '...', authorId: 'u1', tags: ['ts'], published: false
+// };
+// const newArticle = createArticle(dto);
+// console.log(newArticle.id, newArticle.createdAt);
 type CreateArticleDto = Omit<Article, 'id' | 'createdAt' | 'updatedAt'>;
 type CreateAuthorDto = Omit<Author, 'id'>;
 
@@ -116,6 +128,10 @@ console.log('\n=== Exercise 4: Record ===');
 //   c) Function 'hasPermission(role, action)': checks if role can perform action
 
 // Your code here:
+
+// console.log(hasPermission('editor', 'delete')); // false
+// console.log(hasPermission('admin', 'delete'));  // true
+// console.log(hasPermission('viewer', 'read'));   // true
 type ArticleById = Record<string, Article>;
 type RoleToPermissions = Record<'admin' | 'editor' | 'viewer', string[]>;
 
@@ -136,6 +152,15 @@ console.log(hasPermission('viewer', 'read')); // true
 
 console.log('\n=== Exercise 5: Exclude and Extract ===');
 // TODO: Given the union below:
+type EventType =
+  | 'click'
+  | 'focus'
+  | 'blur'
+  | 'keydown'
+  | 'keyup'
+  | 'mouseenter'
+  | 'mouseleave'
+  | 'scroll';
 type EventType =
   | 'click'
   | 'focus'
@@ -168,6 +193,9 @@ function searchArticles(_query: string, _tags: string[], _limit: number): Articl
 async function loadAuthorWithArticles(
   _authorId: string
 ): Promise<{ author: Author; articles: Article[] }> {
+async function loadAuthorWithArticles(
+  _authorId: string
+): Promise<{ author: Author; articles: Article[] }> {
   return { author: {} as Author, articles: [] }; // stub
 }
 
@@ -188,6 +216,9 @@ type LoadedResult = Awaited<ReturnType<typeof loadAuthorWithArticles>>;
 type ArticleList = LoadedResult['articles'];
 
 // Verify:
+// const param: SearchFirstParam = 'typescript';
+// const result: SearchResult = [];
+// const loaded: LoadedResult = { author: {} as Author, articles: [] };
 const param: SearchFirstParam = 'typescript';
 const result: SearchResult = [];
 const loaded: LoadedResult = { author: {} as Author, articles: [] };
@@ -204,6 +235,9 @@ console.log('\n=== Exercise 7: Readonly for immutability ===');
 //       Hint: type DeepReadonly<T> = { readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K] }
 
 // Your code here:
+
+// const frozen = freeze({ name: 'Alice', tags: ['ts'] });
+// frozen.name = 'Bob'; // ❌ should be readonly at compile time
 function freeze<T>(obj: T): Readonly<T> {
   return Object.freeze(obj);
 }
