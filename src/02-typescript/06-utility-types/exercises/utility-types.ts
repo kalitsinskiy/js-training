@@ -36,6 +36,7 @@ function patchArticle(article: Article, update: ArticleUpdate): Article {
   return { ...article, ...update, updatedAt: new Date() };
 }
 
+<<<<<<< HEAD
 const article: Article = {
   id: 'a1',
   title: 'Hello',
@@ -49,6 +50,8 @@ const article: Article = {
 const patched = patchArticle(article, { title: 'Updated Title', published: true });
 console.log(patched.title, patched.published);
 
+=======
+>>>>>>> main
 console.log('\n=== Exercise 2: Pick for API responses ===');
 // TODO: Create these types using Pick:
 //   - 'ArticleListItem': only id, title, tags, published, createdAt
@@ -65,10 +68,13 @@ function toListItem(article: Article): ArticleListItem {
   return { id, title, tags, published, createdAt };
 }
 
+<<<<<<< HEAD
 const item = toListItem(article);
 console.log(item.title);
 //console.log(item.body); // ❌ should not exist on ArticleListItem
 
+=======
+>>>>>>> main
 console.log('\n=== Exercise 3: Omit for create DTOs ===');
 // TODO: Create these types using Omit:
 //   - 'CreateArticleDto': everything except id, createdAt, updatedAt (auto-generated)
@@ -79,6 +85,7 @@ console.log('\n=== Exercise 3: Omit for create DTOs ===');
 
 type CreateArticleDto = Omit<Article, 'id' | 'createdAt' | 'updatedAt'>;
 
+<<<<<<< HEAD
 function createArticle(dto: CreateArticleDto): Article {
   const now = new Date();
   return {
@@ -99,6 +106,8 @@ const dto: CreateArticleDto = {
 const newArticle = createArticle(dto);
 console.log(newArticle.id, newArticle.createdAt);
 
+=======
+>>>>>>> main
 console.log('\n=== Exercise 4: Record ===');
 // TODO: Create the following using Record:
 //   a) 'ArticleById': maps article id (string) to Article
@@ -113,6 +122,7 @@ console.log('\n=== Exercise 4: Record ===');
 
 type RoleToPermissions = Record<'admin' | 'editor' | 'viewer', string[]>;
 
+<<<<<<< HEAD
 const roleToPermissions: RoleToPermissions = {
   admin: ['create', 'read', 'update', 'delete'],
   editor: ['create', 'read', 'update'],
@@ -127,6 +137,8 @@ console.log(hasPermission('editor', 'delete')); // false
 console.log(hasPermission('admin', 'delete')); // true
 console.log(hasPermission('viewer', 'read')); // true
 
+=======
+>>>>>>> main
 console.log('\n=== Exercise 5: Exclude and Extract ===');
 // TODO: Given the union below:
 type EventType =
@@ -151,6 +163,7 @@ type MouseEvents = Extract<EventType, `mouse${string}`>;
 type NonMouseEvents = Exclude<EventType, MouseEvents>;
 type FocusEvents = Extract<EventType, 'focus' | 'blur'>;
 
+<<<<<<< HEAD
 const kbEvent: KeyboardEvents = 'keydown';
 const mouseEvent: MouseEvents = 'mouseenter';
 const nonMouseEvent: NonMouseEvents = 'scroll';
@@ -158,6 +171,8 @@ const focusEvent: FocusEvents = 'blur';
 
 console.log(kbEvent, mouseEvent, nonMouseEvent, focusEvent);
 
+=======
+>>>>>>> main
 console.log('\n=== Exercise 6: ReturnType and Parameters ===');
 // TODO: Given these functions (don't modify them):
 
@@ -188,11 +203,17 @@ type LoadedResult = Awaited<ReturnType<typeof loadAuthorWithArticles>>;
 type ArticleList = LoadedResult['articles'];
 
 // Verify:
+<<<<<<< HEAD
 const param: SearchFirstParam = 'typescript';
 const result: SearchResult = [];
 const loaded: LoadedResult = { author: {} as Author, articles: [] };
 const articles: ArticleList = [];
 console.log(param, result, loaded, articles);
+=======
+// const param: SearchFirstParam = 'typescript';
+// const result: SearchResult = [];
+// const loaded: LoadedResult = { author: {} as Author, articles: [] };
+>>>>>>> main
 
 console.log('\n=== Exercise 7: Readonly for immutability ===');
 // TODO: Write a function 'freeze<T>(obj: T): Readonly<T>'
@@ -207,10 +228,13 @@ function freeze<T>(obj: T): Readonly<T> {
   return Object.freeze(obj);
 }
 
+<<<<<<< HEAD
 const frozen = freeze({ name: 'Alice', tags: ['ts'] });
 console.log(frozen.name);
 //frozen.name = 'Bob'; // ❌ should be readonly at compile time
 
+=======
+>>>>>>> main
 console.log('\n=== 🎯 Challenge: Build utility types from scratch ===');
 // TODO: Implement these utility types YOURSELF (without using the built-in versions):
 //
