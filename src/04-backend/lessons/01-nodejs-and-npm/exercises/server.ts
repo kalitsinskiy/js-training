@@ -1,7 +1,3 @@
-// Note: `export {}` tells TypeScript this file is an ES module (not a script).
-// Without it, top-level variables would be treated as global, causing conflicts
-// with other files. This is only needed when the file has no other import/export.
-export {};
 // ============================================
 // NODE.JS HTTP SERVER Exercise
 // ============================================
@@ -22,65 +18,35 @@ interface Note {
   createdAt: string;
 }
 
-const notes: Note[] = []; // eslint-disable-line @typescript-eslint/no-unused-vars
-let nextId = 1; // eslint-disable-line @typescript-eslint/no-unused-vars, prefer-const
+const notes: Note[] = [];
+let nextId = 1;
 
 // TODO: Implement a helper that reads the request body and parses it as JSON.
 //
 // The `http` module gives you the body as a stream of chunks, not a single string.
 // You need to collect all chunks, concatenate them, and then JSON.parse().
 //
-// function parseBody(req: http.IncomingMessage): Promise<any> {
-//   return new Promise((resolve, reject) => {
-//     const chunks: Buffer[] = [];
-//     req.on('data', (chunk) => ... );       // collect each chunk
-//     req.on('end', () => ... );             // concatenate and parse
-//     req.on('error', (err) => reject(err));
-//   });
-// }
 
-// TODO: Implement a helper that parses a URL and extracts the pathname and query params.
-//
-// Use the built-in URL class:
-//   const parsed = new URL(rawUrl, 'http://localhost');
-//   parsed.pathname  → '/notes'
-//   parsed.searchParams.get('search')  → 'hello' (from '/notes?search=hello')
-//
-// function parseUrl(rawUrl: string): { pathname: string; searchParams: URLSearchParams } { ... }
+function parseBody(req: http.IncomingMessage): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString()));
+      } catch {
+        reject(new Error('Invalid JSON'));
+      }
+    });
+    req.on('error', reject);
+  });
+}
 
-// TODO: Create an HTTP server with http.createServer() that handles:
-//
-// 1. GET /health
-//    - Status 200
-//    - Body: { status: "ok", timestamp: <ISO string> }
-//
-// 2. GET /notes
-//    - Status 200
-//    - Body: array of all notes
-//    - BONUS: support ?search=<text> query param — filter notes whose `text`
-//      includes the search string (case-insensitive)
-//
-// 3. POST /notes
-//    - Read the JSON body using your parseBody helper
-//    - Body must contain { text: string }
-//    - If `text` is missing or empty, respond 400: { error: "text is required" }
-//    - Otherwise create a new Note (assign id, set createdAt), push to array
-//    - Status 201
-//    - Body: the created note object
-//
-// 4. DELETE /notes/:id
-//    - Extract the id from the URL (e.g., /notes/3 → id = 3)
-//    - Find and remove the note with that id
-//    - If not found, respond 404: { error: "Note not found" }
-//    - If found, respond 200: { deleted: true }
-//
-// 5. Any other route → 404: { error: "Not Found" }
-//
-// Requirements:
-// - Always set Content-Type to application/json
-// - Log each request to console: "<METHOD> <URL>"
-// - Listen on PORT (3000)
-//
+function send(res: http.ServerResponse, status: number, body: unknown): void {
+  res.writeHead(status);
+  res.end(JSON.stringify(body));
+}
+
 // Test with:
 //   curl http://localhost:3000/health
 //   curl http://localhost:3000/notes
@@ -90,4 +56,45 @@ let nextId = 1; // eslint-disable-line @typescript-eslint/no-unused-vars, prefer
 //   curl -X DELETE http://localhost:3000/notes/1
 //   curl http://localhost:3000/notes
 
-// Your code here:
+const server = http.createServer(async (req, res) => {
+  const { method, url = '/' } = req;
+  console.log(`${method} ${url}`);
+  res.setHeader('Content-Type', 'application/json');
+
+  if (method === 'GET' && url === '/health') {
+    return send(res, 200, { status: 'ok', timestamp: new Date().toISOString() });
+  }
+
+  if (method === 'GET' && url.startsWith('/notes')) {
+    const { searchParams } = new URL(url, 'http://localhost');
+    const search = searchParams.get('search')?.toLowerCase() ?? '';
+    const result = search ? notes.filter((n) => n.text.toLowerCase().includes(search)) : notes;
+    return send(res, 200, result);
+  }
+
+  if (method === 'POST' && url === '/notes') {
+    try {
+      const body = (await parseBody(req)) as Record<string, unknown>;
+      if (typeof body['text'] !== 'string' || !body['text'].trim()) {
+        return send(res, 400, { error: 'text is required' });
+      }
+      const note: Note = { id: nextId++, text: body['text'], createdAt: new Date().toISOString() };
+      notes.push(note);
+      return send(res, 201, note);
+    } catch {
+      return send(res, 400, { error: 'Invalid JSON' });
+    }
+  }
+
+  if (method === 'DELETE' && url.startsWith('/notes/')) {
+    const id = Number(url.split('/')[2]);
+    const index = notes.findIndex((n) => n.id === id);
+    if (index === -1) return send(res, 404, { error: 'Note not found' });
+    notes.splice(index, 1);
+    return send(res, 200, { deleted: true });
+  }
+
+  send(res, 404, { error: 'Not Found' });
+});
+
+server.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
