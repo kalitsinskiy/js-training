@@ -36,7 +36,11 @@ function parseBody(req: http.IncomingMessage): Promise<any> {
     req.on('data', (chunk) => chunks.push(chunk));
     req.on('end', () => {
       const raw = Buffer.concat(chunks).toString();
-      try { resolve(raw ? JSON.parse(raw) : {}); } catch { reject(new Error('Invalid JSON')); }
+      try {
+        resolve(raw ? JSON.parse(raw) : {});
+      } catch {
+        reject(new Error('Invalid JSON'));
+      }
     });
     req.on('error', reject);
   });
@@ -106,3 +110,139 @@ function sendJson(res: http.ServerResponse, status: number, data: unknown) {
 //   curl http://localhost:3000/api/users
 
 // Your code here:
+
+const server = http.createServer(async (req, res) => {
+  const { pathname, searchParams } = parseUrl(req.url ?? '/');
+  const method = req.method ?? 'GET';
+
+  // Route: /api/users
+  if (pathname === '/api/users') {
+    if (method === 'GET') {
+      const role = searchParams.get('role');
+      const result = role ? users.filter((u) => u.role === role) : users;
+      return sendJson(res, 200, result);
+    }
+
+    if (method === 'POST') {
+      let body: { name?: string; email?: string; role?: string };
+      try {
+        body = await parseBody(req);
+      } catch {
+        return sendJson(res, 400, { error: 'Invalid JSON' });
+      }
+
+      const { name, email, role } = body;
+      if (
+        !name ||
+        !email ||
+        !role ||
+        typeof name !== 'string' ||
+        typeof email !== 'string' ||
+        typeof role !== 'string'
+      ) {
+        return sendJson(res, 400, {
+          error: 'name, email, and role are required non-empty strings',
+        });
+      }
+
+      if (users.find((u) => u.email === email)) {
+        return sendJson(res, 409, { error: 'Email already exists' });
+      }
+
+      const user: User = { id: nextId++, name, email, role, createdAt: new Date().toISOString() };
+      users.push(user);
+
+      res.setHeader('Location', `/api/users/${user.id}`);
+      return sendJson(res, 201, user);
+    }
+
+    return sendJson(res, 404, { error: 'Not Found' });
+  }
+
+  // Route: /api/users/:id
+  const match = pathname.match(/^\/api\/users\/(\d+)$/);
+  if (match) {
+    const id = parseInt(match[1] as string, 10);
+
+    if (method === 'GET') {
+      const user = users.find((u) => u.id === id);
+      if (!user) return sendJson(res, 404, { error: 'User not found' });
+      return sendJson(res, 200, user);
+    }
+
+    if (method === 'PUT') {
+      let body: { name?: string; email?: string; role?: string };
+      try {
+        body = await parseBody(req);
+      } catch {
+        return sendJson(res, 400, { error: 'Invalid JSON' });
+      }
+
+      const { name, email, role } = body;
+      if (
+        !name ||
+        !email ||
+        !role ||
+        typeof name !== 'string' ||
+        typeof email !== 'string' ||
+        typeof role !== 'string'
+      ) {
+        return sendJson(res, 400, {
+          error: 'name, email, and role are required for full replacement',
+        });
+      }
+
+      const index = users.findIndex((u) => u.id === id);
+      if (index === -1) return sendJson(res, 404, { error: 'User not found' });
+
+      const conflict = users.find((u) => u.email === email && u.id !== id);
+      if (conflict) return sendJson(res, 409, { error: 'Email already exists' });
+
+      const existing = users[index]!;
+      users[index] = { id: existing.id, name, email, role, createdAt: existing.createdAt };
+      return sendJson(res, 200, users[index]);
+    }
+
+    if (method === 'PATCH') {
+      let body: { name?: string; email?: string; role?: string };
+      try {
+        body = await parseBody(req);
+      } catch {
+        return sendJson(res, 400, { error: 'Invalid JSON' });
+      }
+
+      const index = users.findIndex((u) => u.id === id);
+      if (index === -1) return sendJson(res, 404, { error: 'User not found' });
+
+      if (body.email !== undefined) {
+        const conflict = users.find((u) => u.email === body.email && u.id !== id);
+        if (conflict) return sendJson(res, 409, { error: 'Email already exists' });
+      }
+
+      const existing = users[index]!;
+      users[index] = {
+        ...existing,
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.email !== undefined && { email: body.email }),
+        ...(body.role !== undefined && { role: body.role }),
+      };
+      return sendJson(res, 200, users[index]);
+    }
+
+    if (method === 'DELETE') {
+      const index = users.findIndex((u) => u.id === id);
+      if (index === -1) return sendJson(res, 404, { error: 'User not found' });
+      users.splice(index, 1);
+      res.writeHead(204);
+      return res.end();
+    }
+
+    return sendJson(res, 404, { error: 'Not Found' });
+  }
+
+  sendJson(res, 404, { error: 'Not Found' });
+});
+
+server.listen(PORT, () => {
+  console.log(`CRUD server running on http://localhost:${PORT}`);
+});

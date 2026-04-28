@@ -13,3 +13,17 @@
 // or by assigning to `module.exports.functionName = ...`
 
 // Your code here:
+function add(a, b) {
+  return a + b;
+}
+function subtract(a, b) {
+  return a - b;
+}
+function multiply(a, b) {
+  return a * b;
+}
+function divide(a, b) {
+  return b === 0 ? (() => { throw new Error('Division by zero'); })() : a / b;
+}
+
+module.exports = { add, subtract, multiply, divide };
