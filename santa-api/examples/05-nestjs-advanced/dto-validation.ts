@@ -9,17 +9,38 @@ export {};
 
 import 'reflect-metadata';
 import {
-  Controller, Post, Body, Module, UsePipes, ValidationPipe,
+  Controller,
+  Post,
+  Body,
+  Module,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import { IsString, IsEmail, MinLength, IsOptional, IsEnum, IsInt, Min, Max } from 'class-validator';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
+import {
+  IsString,
+  IsEmail,
+  MinLength,
+  IsOptional,
+  IsEnum,
+  IsInt,
+  Min,
+  Max,
+} from 'class-validator';
 
 // ---- DTOs ----
 // Each property is decorated with class-validator decorators.
 // ValidationPipe checks these rules before the handler runs.
 
-enum Priority { LOW = 'low', MEDIUM = 'medium', HIGH = 'high' }
+enum Priority {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+}
 
 class CreateTaskDto {
   @IsString()
@@ -85,7 +106,11 @@ async function bootstrap() {
   // Helper to make requests and show results
   const baseUrl = 'http://localhost:3000';
 
-  async function testRequest(label: string, url: string, body: Record<string, unknown>) {
+  async function testRequest(
+    label: string,
+    url: string,
+    body: Record<string, unknown>,
+  ) {
     console.log(`--- ${label} ---`);
     console.log(`POST ${url}`);
     console.log('Body:', JSON.stringify(body));

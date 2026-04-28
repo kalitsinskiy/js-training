@@ -10,11 +10,20 @@ export {};
 
 import 'reflect-metadata';
 import {
-  Controller, Get, Query, Module, Injectable,
-  PipeTransform, ArgumentMetadata, BadRequestException,
+  Controller,
+  Get,
+  Query,
+  Module,
+  Injectable,
+  PipeTransform,
+  ArgumentMetadata,
+  BadRequestException,
 } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 
 // ---- Pipes ----
 
@@ -27,6 +36,19 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 //   - Return the parsed number
 // - Decorate with @Injectable()
 
+@Injectable()
+class CustomParseIntPipe implements PipeTransform<string, number> {
+  transform(value: string, metadata: ArgumentMetadata): number {
+    const parsedValue = parseInt(value, 10);
+    if (isNaN(parsedValue)) {
+      throw new BadRequestException(
+        `Invalid value for parameter '${metadata.data}': ${value}`,
+      );
+    }
+    return parsedValue;
+  }
+}
+
 // TODO 2: Create a ParseSortPipe
 // - Implement PipeTransform<string, 'asc' | 'desc'>
 // - In the transform() method:
@@ -35,8 +57,20 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 //   - If value is undefined/empty, return 'asc' as default
 //   - Return the validated sort direction
 
-// ---- Controller ----
+@Injectable()
+class ParseSortPipe implements PipeTransform<string, 'asc' | 'desc'> {
+  transform(value: string, metadata: ArgumentMetadata): 'asc' | 'desc' {
+    const sortValue = value?.toLowerCase();
+    if (sortValue !== 'asc' && sortValue !== 'desc') {
+      throw new BadRequestException(
+        `Invalid value for parameter '${metadata.data}': ${value}`,
+      );
+    }
+    return sortValue || 'asc';
+  }
+}
 
+// ---- Controller ----
 // TODO 3: Create an ItemsController with route GET /items
 // - Use @Query('page', CustomParseIntPipe) to get page as number
 // - Use @Query('limit', CustomParseIntPipe) to get limit as number
@@ -50,13 +84,46 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 
 // ---- Module & Bootstrap ----
 
+@Controller('items')
+class ItemsController {
+  @Get()
+  getItems(
+    @Query('page', CustomParseIntPipe) page: number,
+    @Query('limit', CustomParseIntPipe) limit: number,
+    @Query('sort', ParseSortPipe) sort: 'asc' | 'desc',
+  ) {
+    return { page, limit, sort, message: 'Params validated!' };
+  }
+}
+
 // TODO 4: Create AppModule and bootstrap function
 // - Register the controller
 // - Use FastifyAdapter, port 3000
 // - Log the URL and example curl commands
 
+@Module({
+  controllers: [ItemsController],
+})
+class AppModule {}
+
 async function bootstrap() {
-  // Your bootstrap code here
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter(),
+  );
+
+  await app.listen(3000);
+  console.log('🚀 Server running at http://localhost:3000');
+  console.log('');
+  console.log('Example curl commands:');
+  console.log('  curl "http://localhost:3000/items?page=1&limit=10&sort=desc"');
+  console.log('  curl "http://localhost:3000/items?page=2&limit=20&sort=asc"');
+  console.log(
+    '  curl "http://localhost:3000/items?page=abc&limit=10"  # Should return 400',
+  );
+  console.log(
+    '  curl "http://localhost:3000/items?page=1&limit=10&sort=xyz"  # Should return 400',
+  );
 }
 
 bootstrap();
