@@ -72,14 +72,17 @@ console.log('\n=== Exercise 8: Callback pattern ===');
 // Your code here:
 
 
-console.log('\n=== Exercise 9: Closure ===');
-// TODO: Create a function 'createCounter' that returns an object with:
-// - increment(): increases counter and returns new value
-// - decrement(): decreases counter and returns new value
-// - reset(): resets counter to 0
-// - getValue(): returns current value
-// The counter should be private (not accessible from outside)
-// Your code here:
+console.log('\n=== Exercise 9: bind / call / apply ===');
+// TODO: Given the function and the object below, call greet so that
+// `this` inside it points to `user` — using each of: call, apply, bind
+function greet(greeting, punctuation) {
+  return `${greeting}, ${this.name}${punctuation}`;
+}
+const user = { name: 'Alice' };
+// Use call:
+// Use apply:
+// Use bind (then invoke the bound function):
+// All three should produce: "Hello, Alice!"
 
 
 console.log('\n=== Exercise 10: Pure function ===');
@@ -93,40 +96,6 @@ function calculatePrice(price) {
 // Your pure version here (hint: pass discount as parameter):
 
 
-console.log('\n=== 🎯 Challenge: Function composition ===');
-// TODO: Create a compose function that takes multiple functions
-// and returns a new function that applies them right-to-left
-// Example:
-// const add1 = x => x + 1;
-// const double = x => x * 2;
-// const add1ThenDouble = compose(double, add1);
-// add1ThenDouble(5) should return 12 // (5 + 1) * 2
-// Your code here:
-
-
-console.log('\n=== 🎯 Challenge: Debounce ===');
-// TODO: Create a debounce function that delays function execution
-// until after a certain time has passed since the last call
-// This is commonly used for search inputs
-// Example:
-// const debouncedLog = debounce(console.log, 1000);
-// debouncedLog('a'); // Waits 1 second
-// debouncedLog('b'); // Cancels previous, waits 1 second
-// debouncedLog('c'); // Cancels previous, waits 1 second
-// Only 'c' gets logged after 1 second
-
-function debounce(func, delay) {
-  // Your code here
-  // Hint: use setTimeout and clearTimeout
-}
-
-// Test it (uncomment):
-// const debouncedLog = debounce((msg) => console.log('Logged:', msg), 1000);
-// debouncedLog('First');
-// debouncedLog('Second');
-// debouncedLog('Third'); // Only this should execute after 1 second
-
-
 console.log('\n=== 🎯 Challenge: Curry function ===');
 // TODO: Create a curry function that transforms a function
 // taking multiple arguments into a sequence of functions
@@ -137,33 +106,6 @@ console.log('\n=== 🎯 Challenge: Curry function ===');
 // curriedAdd(1)(2)(3) should return 6
 // curriedAdd(1, 2)(3) should also return 6
 // Your code here:
-
-
-console.log('\n=== 🎯 Challenge: Memoization ===');
-// TODO: Create a memoize function that caches function results
-// to avoid expensive recalculations
-// Example:
-// function slowFib(n) {
-//   if (n <= 1) return n;
-//   return slowFib(n - 1) + slowFib(n - 2);
-// }
-// const fastFib = memoize(slowFib);
-// fastFib(40) // Fast after first call
-
-function memoize(func) {
-  // Your code here
-  // Hint: use an object to store results
-}
-
-// Test it (uncomment):
-// function expensive(n) {
-//   console.log('Computing...');
-//   return n * 2;
-// }
-// const memoized = memoize(expensive);
-// console.log(memoized(5)); // Logs "Computing..." then 10
-// console.log(memoized(5)); // Just returns 10 (no "Computing...")
-// console.log(memoized(10)); // Logs "Computing..." then 20
 
 
 console.log('\n✅ Exercises completed! Check your answers with a mentor.');
