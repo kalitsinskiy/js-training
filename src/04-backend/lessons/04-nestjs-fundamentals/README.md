@@ -265,35 +265,4 @@ create(@Body() dto: CreateItemDto) {
 
 ## App Task
 
-In `santa-api` (NestJS + Fastify adapter):
-
-### 1. Project Setup
-
-```bash
-nest new santa-api
-cd santa-api
-npm install @nestjs/platform-fastify fastify
-```
-
-Update `main.ts` to use `FastifyAdapter` (see examples above). Set port to `3001`.
-
-### 2. Create UsersModule
-
-- `UsersService` — in-memory `Map<string, User>` storage
-- `UsersController` — two endpoints:
-  - `POST /users` — create a user (`{ name, email }`), return the created user with 201
-  - `GET /users/:id` — return user by ID, or 404
-
-### 3. Create RoomsModule
-
-- `RoomsService` — in-memory `Map<string, Room>` storage
-- `RoomsController` — four endpoints:
-  - `POST /rooms` — create a room (`{ name, ownerId }`), auto-generate a unique `code` (6 chars), return 201
-  - `GET /rooms` — return all rooms
-  - `GET /rooms/:id` — return room by ID, or 404
-  - `POST /rooms/:code/join` — join a room by code (`{ userId }`), add user to room's `members` array
-
-### 4. Wire It Up
-
-- Import `UsersModule` and `RoomsModule` into `AppModule`
-- Test all endpoints with `curl` or an HTTP client
+See [exercises/app-task.md](exercises/app-task.md) — bootstrap `santa-api`, then build `UsersModule` and `RoomsModule`.

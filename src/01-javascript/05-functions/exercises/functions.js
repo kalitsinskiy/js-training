@@ -126,6 +126,18 @@ function processArray(array, callback) {
 const processed = processArray([1, 2, 3], (x) => x * 2);
 console.log('Processed Array:', processed);
 
+console.log('\n=== Exercise 9: bind / call / apply ===');
+// TODO: Given the function and the object below, call greet so that
+// `this` inside it points to `user` — using each of: call, apply, bind
+function greet(greeting, punctuation) {
+  return `${greeting}, ${this.name}${punctuation}`;
+}
+const user = { name: 'Alice' };
+// Use call:
+// Use apply:
+// Use bind (then invoke the bound function):
+// All three should produce: "Hello, Alice!"
+
 console.log('\n=== Exercise 9: Closure ===');
 // TODO: Create a function 'createCounter' that returns an object with:
 // - increment(): increases counter and returns new value
@@ -173,6 +185,7 @@ function calculatePrice(price) {
 }
 */
 // Your pure version here (hint: pass discount as parameter):
+
 function calculatePrice(price, discount) {
   return price - price * discount;
 }
@@ -238,6 +251,7 @@ console.log('\n=== 🎯 Challenge: Curry function ===');
 // curriedAdd(1)(2)(3) should return 6
 // curriedAdd(1, 2)(3) should also return 6
 // Your code here:
+
 function curryTransform(fn) {
   return function curried(...args) {
     if (args.length >= fn.length) {
