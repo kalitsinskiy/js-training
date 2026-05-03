@@ -364,9 +364,7 @@ This makes it easy to swap MongoDB for another database later and simplifies tes
    npx ts-node --transpile-only exercises/07-mongodb-and-mongoose/crud-exercise.ts
    ```
 
-3. **Answer** `QUESTIONS.md` for self-evaluation.
-
-4. **Complete the App Task** below.
+3. **Complete the App Task** below.
 
 ## App Task
 

@@ -352,9 +352,7 @@ Without these, `cors-config.ts` will fail with `TS2307: Cannot find module 'fast
    ```
    `exercises/swagger-exercise.ts` is meant to be read and the TODOs applied in the actual NestJS app.
 
-3. **Answer the questions** in [QUESTIONS.md](QUESTIONS.md).
-
-4. **Complete the App Task** below.
+3. **Complete the App Task** below.
 
 ## App Task
 

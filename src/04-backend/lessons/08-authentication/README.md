@@ -286,9 +286,7 @@ This pulls in `bcrypt`, `jsonwebtoken`, `@types/bcrypt`, and `@types/jsonwebtoke
    npx ts-node src/04-backend/lessons/08-authentication/exercises/rbac.ts
    ```
 
-3. **Answer the questions** in [QUESTIONS.md](QUESTIONS.md).
-
-4. **Complete the App Task** below.
+3. **Complete the App Task** below.
 
 ## App Task
 

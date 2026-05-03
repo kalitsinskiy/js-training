@@ -213,7 +213,7 @@ const res = await request(app.getHttpServer())
   .expect(200);
 ```
 
-Reserve `POST /auth/login` for one or two tests that *specifically* verify the login endpoint — see QUESTIONS.md #9.
+Reserve `POST /auth/login` for one or two tests that *specifically* verify the login endpoint — every other test should bypass it by signing a JWT directly, so login latency (bcrypt is intentionally slow) doesn't dominate the suite.
 
 ---
 
@@ -243,7 +243,7 @@ const mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 Cover:
 
 - `register()` — calls `bcrypt.hash` (assert it was called, not what hash was produced); rejects duplicate email with `ConflictException`; returns `{ id, email, displayName, accessToken }`.
-- `login()` — happy path with valid credentials; rejects with `UnauthorizedException('Invalid credentials')` for wrong password **and** for non-existent email — both with the **same message** (Lesson 08, QUESTIONS.md #8).
+- `login()` — happy path with valid credentials; rejects with `UnauthorizedException('Invalid credentials')` for wrong password **and** for non-existent email — both with the **same message** (the generic-error rule from Lesson 08 that defends against email enumeration).
 
 ### 6.3 Integration — auth (`test/auth.e2e-spec.ts`)
 
@@ -295,7 +295,7 @@ module.exports = {
 };
 ```
 
-Don't set integration-test coverage thresholds — they aren't a meaningful number (most lines are covered by definition when you exercise the HTTP layer). See QUESTIONS.md #8 and #12.
+Don't set integration-test coverage thresholds — they aren't a meaningful number (most lines are covered by definition when you exercise the HTTP layer, even if a branch is never asserted). Coverage thresholds belong on unit tests where coverage actually reflects what was *checked*.
 
 ---
 

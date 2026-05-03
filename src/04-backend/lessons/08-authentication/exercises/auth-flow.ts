@@ -10,7 +10,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 // These imports and variables are used in TODO implementations below
-void bcrypt; void jwt;
+void bcrypt;
+void jwt;
 
 // --- Simulated database ---
 
@@ -23,14 +24,18 @@ interface User {
 }
 
 const users = new Map<string, User>();
-let nextId = 1;
+const nextId = 1;
 
 const JWT_SECRET = 'exercise-secret-key';
 const JWT_EXPIRES_IN = '1h';
 const SALT_ROUNDS = 10;
 
 // These variables are used in TODO implementations below
-void users; void nextId; void JWT_SECRET; void JWT_EXPIRES_IN; void SALT_ROUNDS;
+void users;
+void nextId;
+void JWT_SECRET;
+void JWT_EXPIRES_IN;
+void SALT_ROUNDS;
 
 // ============================================
 // TODO 1: Implement the register function
@@ -117,7 +122,7 @@ function verifyToken(_token: string): TokenPayload {
 async function changePassword(
   _email: string,
   _oldPassword: string,
-  _newPassword: string,
+  _newPassword: string
 ): Promise<boolean> {
   // TODO: Rename parameters (remove _ prefix) and implement this function
   throw new Error('Not implemented');

@@ -410,7 +410,7 @@ npx jest src/04-backend/lessons/10-testing-backend/exercises/service-test.spec.t
 npx jest src/04-backend/lessons/10-testing-backend/exercises/endpoint-test.spec.ts
 ```
 
-Then **answer the questions** in [QUESTIONS.md](QUESTIONS.md), and **complete the App Task** below.
+Then **complete the App Task** below.
 
 ## App Task
 

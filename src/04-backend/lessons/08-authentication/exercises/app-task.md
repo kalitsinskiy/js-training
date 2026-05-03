@@ -30,7 +30,7 @@ findByEmail(email: string, opts: { withPassword?: boolean } = {}) {
 }
 ```
 
-Why this matters: `select: false` is the right default for every query in the system (room lookups, listings, profile reads) — but the **one** place that legitimately needs the hash is the login flow. See QUESTIONS.md #7.
+Why this matters: `select: false` is the right default for every query in the system (room lookups, listings, profile reads) — but the **one** place that legitimately needs the hash is the login flow.
 
 Also delete or migrate any users created in Lesson 07 with `passwordHash: 'TODO_LESSON_08'` — those accounts cannot log in. Either wipe the `users` collection in mongosh or write a one-off migration script that hashes a default password for them.
 
@@ -92,7 +92,7 @@ Body: `{ email, password }`.
 
 Steps:
 1. `findByEmail(email, { withPassword: true })`.
-2. If no user **or** `bcrypt.compare(password, user.passwordHash)` is `false` → throw `UnauthorizedException('Invalid credentials')`. **Use the same error for both cases** (see QUESTIONS.md #8 — this defends against email enumeration).
+2. If no user **or** `bcrypt.compare(password, user.passwordHash)` is `false` → throw `UnauthorizedException('Invalid credentials')`. **Use the same error for both cases** — this defends against email enumeration (an attacker who can distinguish "no such user" from "wrong password" can probe which emails are registered).
 3. Sign a JWT with the same payload as register.
 
 Response: `{ "accessToken": "eyJ..." }`.

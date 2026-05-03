@@ -41,7 +41,7 @@ SwaggerModule.setup('docs', app, document, {
 });
 ```
 
-> Detail that bites people: the second arg to `addBearerAuth` (`'JWT'`) is the **security scheme name**. The same string must be passed to `@ApiBearerAuth('JWT')` on every protected controller — otherwise Swagger UI won't show the lock icon and the "Authorize" button won't apply your token to those endpoints. See QUESTIONS.md #9.
+> Detail that bites people: the second arg to `addBearerAuth` (`'JWT'`) is the **security scheme name**. The same string must be passed to `@ApiBearerAuth('JWT')` on every protected controller — otherwise Swagger UI won't show the lock icon and the "Authorize" button won't apply your token to those endpoints.
 
 ### 2.2 Decorate every controller
 
@@ -129,7 +129,7 @@ findAll(
 
 `RoomsService.findByUser` calls `paginate(this.roomModel, { participants: userId }, { page, limit })`.
 
-**Update `docs/api-contract.md`** for `GET /api/rooms` — the response shape changes from `[{ ... }]` to `{ data: [...], meta: {...} }`. This is a **breaking change** for any existing client; in a real product you'd add a deprecation header or a version bump (see QUESTIONS.md #10), but for this lesson update the contract directly.
+**Update `docs/api-contract.md`** for `GET /api/rooms` — the response shape changes from `[{ ... }]` to `{ data: [...], meta: {...} }`. This is a **breaking change** for any existing client; in a real product you'd add a deprecation header or a version bump, but for this lesson update the contract directly.
 
 ### 3.3 (Bonus) Same in santa-notifications
 
@@ -157,7 +157,7 @@ await app.register(helmet, {
 });
 ```
 
-> **The trap**: with default Helmet CSP, `/docs` renders a blank page and the browser console shows `Refused to execute inline script ... because it violates Content Security Policy`. Adding `'unsafe-inline'` to `scriptSrc` is the standard fix — but it does loosen XSS protection on the `/docs` route, which is why some teams instead host Swagger UI under a separate subdomain or behind a non-public route. See QUESTIONS.md #8.
+> **The trap**: with default Helmet CSP, `/docs` renders a blank page and the browser console shows `Refused to execute inline script ... because it violates Content Security Policy`. Adding `'unsafe-inline'` to `scriptSrc` is the standard fix — but it does loosen XSS protection on the `/docs` route, which is why some teams instead host Swagger UI under a separate subdomain or behind a non-public route.
 
 ### 4.2 Verify
 
@@ -220,7 +220,7 @@ for i in 1 2 3 4 5 6; do
 done
 ```
 
-The blocked response carries `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` headers. The client uses these to back off. See QUESTIONS.md #6 and #7 — IP-based limiting has real edge cases (NAT, mobile carriers).
+The blocked response carries `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` headers. The client uses these to back off. Note: IP-based limiting has real edge cases — multiple users behind a NAT or mobile carrier share an outbound IP, so a per-IP cap can throttle innocent users; for production-grade limits prefer per-user (after auth) or per-API-key, with IP as a coarse fallback for unauthenticated routes.
 
 ---
 
@@ -237,7 +237,7 @@ app.enableCors({
 });
 ```
 
-> **The trap**: `credentials: true` together with `origin: '*'` is rejected by browsers. If you ever set the origin dynamically (`origin: true` or a function), make sure to echo back **the actual request origin** in the `Access-Control-Allow-Origin` response header — never `*`. See QUESTIONS.md #3.
+> **The trap**: `credentials: true` together with `origin: '*'` is rejected by browsers. If you ever set the origin dynamically (`origin: true` or a function), make sure to echo back **the actual request origin** in the `Access-Control-Allow-Origin` response header — never `*`.
 
 ### Verify
 
