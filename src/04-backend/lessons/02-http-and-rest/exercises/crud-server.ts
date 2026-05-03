@@ -36,7 +36,11 @@ function parseBody(req: http.IncomingMessage): Promise<any> {
     req.on('data', (chunk) => chunks.push(chunk));
     req.on('end', () => {
       const raw = Buffer.concat(chunks).toString();
-      try { resolve(raw ? JSON.parse(raw) : {}); } catch { reject(new Error('Invalid JSON')); }
+      try {
+        resolve(raw ? JSON.parse(raw) : {});
+      } catch {
+        reject(new Error('Invalid JSON'));
+      }
     });
     req.on('error', reject);
   });
@@ -106,3 +110,106 @@ function sendJson(res: http.ServerResponse, status: number, data: unknown) {
 //   curl http://localhost:3000/api/users
 
 // Your code here:
+
+const server = http.createServer(async (req: http.IncomingMessage, res: http.ServerResponse) => {
+  const { pathname } = parseUrl(req.url ?? '/');
+  const method = req.method ?? 'GET';
+
+  const usersMatch = pathname.match(/^\/api\/users\/?$/);
+  const userMatch = pathname.match(/^\/api\/users\/(\d+)\/?$/);
+
+  try {
+    if (usersMatch) {
+      if (method === 'GET') {
+        const { searchParams } = parseUrl(req.url ?? '/');
+        const role = searchParams.get('role');
+        const result = role ? users.filter((u) => u.role === role) : users;
+        return sendJson(res, 200, result);
+      }
+
+      if (method === 'POST') {
+        const body = await parseBody(req);
+        const { name, email, role } = body;
+        if (
+          !name ||
+          typeof name !== 'string' ||
+          !email ||
+          typeof email !== 'string' ||
+          !role ||
+          typeof role !== 'string'
+        ) {
+          return sendJson(res, 400, { error: 'name, email, and role are required' });
+        }
+        if (users.find((u) => u.email === email)) {
+          return sendJson(res, 409, { error: 'Email already exists' });
+        }
+        const user: User = { id: nextId++, name, email, role, createdAt: new Date().toISOString() };
+        users.push(user);
+        res.writeHead(201, {
+          'Content-Type': 'application/json',
+          Location: `/api/users/${user.id}`,
+        });
+        return res.end(JSON.stringify(user));
+      }
+    }
+
+    if (userMatch) {
+      const id = parseInt(userMatch[1]!, 10);
+      const idx = users.findIndex((u) => u.id === id);
+
+      if (method === 'GET') {
+        if (idx === -1) return sendJson(res, 404, { error: 'User not found' });
+        return sendJson(res, 200, users[idx]);
+      }
+
+      if (method === 'PUT') {
+        const body = await parseBody(req);
+        const { name, email, role } = body;
+        if (
+          !name ||
+          typeof name !== 'string' ||
+          !email ||
+          typeof email !== 'string' ||
+          !role ||
+          typeof role !== 'string'
+        ) {
+          return sendJson(res, 400, { error: 'name, email, and role are required' });
+        }
+        if (idx === -1) return sendJson(res, 404, { error: 'User not found' });
+        const conflict = users.find((u) => u.email === email && u.id !== id);
+        if (conflict) return sendJson(res, 409, { error: 'Email already exists' });
+        users[idx] = { id: users[idx]!.id, name, email, role, createdAt: users[idx]!.createdAt };
+        return sendJson(res, 200, users[idx]);
+      }
+
+      if (method === 'PATCH') {
+        if (idx === -1) return sendJson(res, 404, { error: 'User not found' });
+        const body = await parseBody(req);
+        const { name, email, role } = body;
+        if (email !== undefined) {
+          const conflict = users.find((u) => u.email === email && u.id !== id);
+          if (conflict) return sendJson(res, 409, { error: 'Email already exists' });
+        }
+        if (name !== undefined) users[idx]!.name = name;
+        if (email !== undefined) users[idx]!.email = email;
+        if (role !== undefined) users[idx]!.role = role;
+        return sendJson(res, 200, users[idx]);
+      }
+
+      if (method === 'DELETE') {
+        if (idx === -1) return sendJson(res, 404, { error: 'User not found' });
+        users.splice(idx, 1);
+        res.writeHead(204);
+        return res.end();
+      }
+    }
+
+    sendJson(res, 404, { error: 'Not Found' });
+  } catch (err) {
+    sendJson(res, 400, { error: (err as Error).message });
+  }
+});
+
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
