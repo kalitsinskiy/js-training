@@ -29,7 +29,6 @@ Before starting this section, you should have completed:
 
 Each lesson contains:
 - **README.md** — Theory, concepts, code snippets, links to resources
-- **QUESTIONS.md** — 5-8 evaluation questions
 - **examples/** — Working runnable code demonstrating concepts
 - **exercises/** — TODO-based standalone exercises
 
@@ -56,7 +55,6 @@ Some lessons also include an **App Task** (`exercises/app-task.md`) — a concre
 2. Run **examples/** with `npx ts-node examples/filename.ts`
 3. Complete **exercises/** by replacing TODO comments with your code
 4. Complete the **App Task** (if present in `exercises/app-task.md`) — this is where you touch the real `santa-api` / `santa-notifications` projects
-5. Answer **QUESTIONS.md** for self-evaluation
 
 ## Tech Stack
 

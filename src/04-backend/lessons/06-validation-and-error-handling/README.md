@@ -396,9 +396,7 @@ npm install -D pino-pretty
    npx ts-node exercises/06-validation-and-error-handling/error-handler.ts
    ```
 
-3. **Answer** `QUESTIONS.md` for self-evaluation.
-
-4. **Complete the App Task** below.
+3. **Complete the App Task** below.
 
 ## App Task
 
