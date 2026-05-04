@@ -126,43 +126,18 @@ function processArray(arr, callback) {
 
 console.log(processArray([1, 2, 3], (x) => x * 2));
 
-console.log('\n=== Exercise 9: Closure ===');
-// TODO: Create a function 'createCounter' that returns an object with:
-// - increment(): increases counter and returns new value
-// - decrement(): decreases counter and returns new value
-// - reset(): resets counter to 0
-// - getValue(): returns current value
-// The counter should be private (not accessible from outside)
-// Your code here:
-function createCounter() {
-  let count = 0;
-
-  return {
-    increment: function () {
-      count++;
-      return count;
-    },
-    decrement: function () {
-      count--;
-      return count;
-    },
-    reset: function () {
-      count = 0;
-    },
-    getValue: function () {
-      return count;
-    },
-  };
+console.log('\n=== Exercise 9: bind / call / apply ===');
+// TODO: Given the function and the object below, call greet so that
+// `this` inside it points to `user` — using each of: call, apply, bind
+function greet(greeting, punctuation) {
+  return `${greeting}, ${this.name}${punctuation}`;
 }
+const user = { name: 'Alice' };
+// Use call:
+// Use apply:
+// Use bind (then invoke the bound function):
+// All three should produce: "Hello, Alice!"
 
-const counter = createCounter();
-console.log(counter.increment());
-console.log(counter.increment());
-console.log(counter.increment());
-console.log(counter.decrement());
-counter.reset();
-console.log(counter.decrement());
-console.log(counter.getValue());
 
 console.log('\n=== Exercise 10: Pure function ===');
 // TODO: Rewrite this IMPURE function as a PURE function
