@@ -110,26 +110,6 @@ const withDuplicates = [1, 2, 2, 3, 3, 3, 4, 4, 5];
 const noDubs = [new Set([withDuplicates])];
 console.log(noDubs);
 
-console.log('\n=== 🎯 Challenge: Group by property ===');
-// TODO: Group users by age
-// Expected output: { 20: [{...}], 25: [{...}, {...}] }
-const people = [
-  { name: 'Alice', age: 25 },
-  { name: 'Bob', age: 20 },
-  { name: 'Charlie', age: 25 },
-];
-// Hint: Use reduce
-// Your code here:
-const groupedByAge = people.reduce((acc, person) => {
-  const age = person.age;
-  if (!acc[age]) {
-    acc[age] = [];
-  }
-  acc[age].push(person);
-  return acc;
-}, {});
-console.log('Grouped by age:', groupedByAge);
-
 console.log('\n=== 🎯 Challenge: Flatten nested array ===');
 // TODO: Flatten this nested array completely
 const nested = [1, [2, [3, [4, 5]]]];
