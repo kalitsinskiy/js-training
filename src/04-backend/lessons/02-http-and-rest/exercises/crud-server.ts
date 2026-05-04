@@ -24,8 +24,8 @@ interface User {
   createdAt: string;
 }
 
-const users: User[] = []; // eslint-disable-line @typescript-eslint/no-unused-vars
-let nextId = 1; // eslint-disable-line @typescript-eslint/no-unused-vars, prefer-const
+const users: User[] = [];
+let nextId = 1;
 
 // --- Helpers (provided) ---
 
@@ -50,6 +50,11 @@ function parseUrl(rawUrl: string) {
 function sendJson(res: http.ServerResponse, status: number, data: unknown) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(data));
+}
+
+function parseId(pathname: string): number | null {
+  const match = pathname.match(/^\/api\/users\/(\d+)$/);
+  return match ? parseInt(match[1]!, 10) : null;
 }
 
 // TODO: Create an HTTP server that implements a User REST API:
@@ -106,3 +111,132 @@ function sendJson(res: http.ServerResponse, status: number, data: unknown) {
 //   curl http://localhost:3000/api/users
 
 // Your code here:
+const server = http.createServer(async (req, res) => {
+  const { method, url } = req;
+  console.log(`${method} ${url}`);
+
+  const { pathname, searchParams } = parseUrl(url!);
+
+  if (pathname === '/api/users' && method === 'GET') {
+    const filters = Object.fromEntries(searchParams.entries());
+    const filteredUsers = users.filter((user) => {
+      return Object.entries(filters).every(([key, value]) => user[key as keyof User] === value);
+    });
+    sendJson(res, 200, filteredUsers);
+    return;
+  }
+
+  if (pathname.startsWith('/api/users/') && method === 'GET') {
+    const id = parseId(pathname);
+    const user = users.find((u) => u.id === id);
+    if (!user) {
+      sendJson(res, 404, { error: 'User not found' });
+      return;
+    }
+    sendJson(res, 200, user);
+    return;
+  }
+
+  if (pathname === '/api/users' && method === 'POST') {
+    const body = await parseBody(req) as { name?: string; email?: string; role?: string };
+    if (!body.name || !body.email || !body.role) {
+      sendJson(res, 400, { error: 'Missing required fields: name, email, role' });
+      return;
+    }
+    if (users.some((u) => u.email === body.email)) {
+      sendJson(res, 409, { error: 'Email already exists' });
+      return;
+    }
+    const newUser: User = {
+      id: nextId++,
+      name: body.name,
+      email: body.email,
+      role: body.role,
+      createdAt: new Date().toISOString(),
+    };
+    users.push(newUser);
+    res.writeHead(201, { 'Content-Type': 'application/json', 'Location': `/api/users/${newUser.id}` });
+    res.end(JSON.stringify(newUser));
+    return;
+  }
+
+  if (pathname.startsWith('/api/users/') && method === 'PUT') {
+    const id = parseId(pathname);
+    const index = users.findIndex((u) => u.id === id);
+    if (index === -1) {
+      sendJson(res, 404, { error: 'User not found' });
+      return;
+    }
+    const body = await parseBody(req) as { name?: string; email?: string; role?: string };
+    if (!body.name || !body.email || !body.role) {
+      sendJson(res, 400, { error: 'Missing required fields: name, email, role' });
+      return;
+    }
+    if (users.some((u) => u.email === body.email && u.id !== id)) {
+      sendJson(res, 409, { error: 'Email already exists' });
+      return;
+    }
+    const existingUser = users[index]!;
+    const updatedUser: User = {
+      id: existingUser.id,
+      createdAt: existingUser.createdAt,
+      name: body.name,
+      email: body.email,
+      role: body.role,
+    };
+    users[index] = updatedUser;
+    sendJson(res, 200, updatedUser);
+    return;
+  }
+
+  if (pathname.startsWith('/api/users/') && method === 'PATCH') {
+    const id = parseId(pathname);
+    const index = users.findIndex((u) => u.id === id);
+    if (index === -1) {
+      sendJson(res, 404, { error: 'User not found' });
+      return;
+    }
+    const body = await parseBody(req) as { name?: string; email?: string; role?: string };
+    if (body.email && users.some((u) => u.email === body.email && u.id !== id)) {
+      sendJson(res, 409, { error: 'Email already exists' });
+      return;
+    }
+    const existingUser = users[index]!;
+    const updatedUser: User = {
+      id: existingUser.id,
+      createdAt: existingUser.createdAt,
+      name: body.name ?? existingUser.name,
+      email: body.email ?? existingUser.email,
+      role: body.role ?? existingUser.role,
+    };
+    users[index] = updatedUser;
+    sendJson(res, 200, updatedUser);
+    return;
+  }
+
+  if (pathname.startsWith('/api/users/') && method === 'DELETE') {
+    const id = parseId(pathname);
+    const index = users.findIndex((u) => u.id === id);
+    if (index === -1) {
+      sendJson(res, 404, { error: 'User not found' });
+      return;
+    }
+    users.splice(index, 1);
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  sendJson(res, 404, { error: 'Not Found' });
+});
+
+server.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}/`);
+  console.log('Test with:');
+  console.log('  curl http://localhost:3000/api/users');
+  console.log('  curl -X POST http://localhost:3000/api/users -H "Content-Type: application/json" -d \'{"name":"John Doe","email":"john@example.com","role":"user"}\'');
+  console.log('  curl http://localhost:3000/api/users/1');
+  console.log('  curl -X PUT http://localhost:3000/api/users/1 -H "Content-Type: application/json" -d \'{"name":"Jane Doe","email":"jane@example.com","role":"admin"}\'');
+  console.log('  curl -X PATCH http://localhost:3000/api/users/1 -H "Content-Type: application/json" -d \'{"name":"John Smith"}\'');
+  console.log('  curl -X DELETE http://localhost:3000/api/users/1');
+});
