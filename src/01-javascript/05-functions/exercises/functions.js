@@ -136,14 +136,17 @@ console.log(
   processArray([1, 2, 3], (x) => x * 2)
 ); // should return [2, 4, 6]
 
-console.log('\n=== Exercise 9: Closure ===');
-// TODO: Create a function 'createCounter' that returns an object with:
-// - increment(): increases counter and returns new value
-// - decrement(): decreases counter and returns new value
-// - reset(): resets counter to 0
-// - getValue(): returns current value
-// The counter should be private (not accessible from outside)
-// Your code here:
+console.log('\n=== Exercise 9: bind / call / apply ===');
+// TODO: Given the function and the object below, call greet so that
+// `this` inside it points to `user` — using each of: call, apply, bind
+function greet(greeting, punctuation) {
+  return `${greeting}, ${this.name}${punctuation}`;
+}
+const user = { name: 'Alice' };
+// Use call:
+// Use apply:
+// Use bind (then invoke the bound function):
+// All three should produce: "Hello, Alice!"
 
 function createCounter() {
   let count = 0;

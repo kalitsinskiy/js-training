@@ -364,42 +364,8 @@ This makes it easy to swap MongoDB for another database later and simplifies tes
    npx ts-node --transpile-only exercises/07-mongodb-and-mongoose/crud-exercise.ts
    ```
 
-3. **Answer** `QUESTIONS.md` for self-evaluation.
-
-4. **Complete the App Task** below.
+3. **Complete the App Task** below.
 
 ## App Task
 
-### Both Apps: Define Mongoose Schemas
-
-**santa-api** schemas:
-- **User**: `email` (unique, lowercase), `passwordHash` (select: false), `displayName`, `role` (enum: user/admin), timestamps
-- **Room**: `name`, `creatorId` (ref: User), `inviteCode` (unique), `participants` (ref: User[]), `status` (enum: pending/drawn), `drawDate`, timestamps
-- **Wishlist**: `userId` (ref: User), `roomId` (ref: Room), `items` (array of `{ name: string, url?: string, priority?: number }`), timestamps
-
-**santa-notifications** schema:
-- **Notification**: `userId`, `type` (enum: room-invite, draw-result, message, etc.), `payload` (Mixed), `read` (default: false), `createdAt`
-
-### Replace In-Memory Storage
-
-1. Remove all `Map` / array-based stores from services
-2. Inject Mongoose models and use them for all data operations
-3. Add unique indexes on `User.email` and `Room.inviteCode`
-4. Add compound index on `Wishlist` for `{ userId: 1, roomId: 1 }` (unique)
-
-### Run MongoDB
-
-Use Docker Compose or a local MongoDB instance:
-```yaml
-# docker-compose.yml (add to existing)
-services:
-  mongodb:
-    image: mongo:7
-    ports:
-      - '27017:27017'
-    volumes:
-      - mongo-data:/data/db
-
-volumes:
-  mongo-data:
-```
+See [exercises/app-task.md](exercises/app-task.md) — replace in-memory `Map` stores with Mongoose models in both services. Defines User/Room/Wishlist schemas in santa-api and Notification in santa-notifications, plus the indexes you need.
