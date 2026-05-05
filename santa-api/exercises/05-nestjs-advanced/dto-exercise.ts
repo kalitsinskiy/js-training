@@ -10,14 +10,34 @@ export {};
 
 import 'reflect-metadata';
 import {
-  Controller, Get, Post, Put, Param, Body, Module, Injectable,
-  ValidationPipe, NotFoundException,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Param,
+  Body,
+  Module,
+  Injectable,
+  ValidationPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import {
-  IsString, IsOptional, IsEnum, MinLength, MaxLength,
-  IsArray, ArrayMinSize, IsUUID, IsDateString, ValidateNested,
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  MinLength,
+  MaxLength,
+  IsArray,
+  ArrayMinSize,
+  IsUUID,
+  IsDateString,
+  ValidateNested,
+  minLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -44,6 +64,31 @@ enum TaskStatus {
 //   - priority: required, must be a value from TaskPriority enum
 //   - dueDate: optional, must be a valid ISO date string (use @IsDateString)
 //   - tags: optional array of strings, each tag min 1 char, max 20 chars
+class CreateTaskDto {
+  @IsString()
+  @minLength(3)
+  @MaxLength(100)
+  title!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
+  @IsEnum(TaskPriority)
+  priority!: TaskPriority;
+
+  @IsOptional()
+  @IsDateString()
+  dueDate?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MinLength(1, { each: true })
+  @MaxLength(20, { each: true })
+  tags?: string[];
+}
 
 // TODO 2: Create an UpdateTaskDto with these validations:
 //   - title: optional string, min 3 chars, max 100 chars
@@ -53,9 +98,42 @@ enum TaskStatus {
 //   - dueDate: optional, must be a valid ISO date string
 //   - tags: optional array of strings
 //   (Hint: all fields are @IsOptional() since it is a partial update)
+class UpdateTaskDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(100)
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
+  @IsOptional()
+  @IsEnum(TaskPriority)
+  priority?: TaskPriority;
+
+  @IsOptional()
+  @IsEnum(TaskStatus)
+  status?: TaskStatus;
+
+  @IsOptional()
+  @IsDateString()
+  dueDate?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+}
 
 // TODO 3: Create an AssignTaskDto with:
 //   - userId: required string, must be a valid UUID
+class AssignTaskDto {
+  @IsUUID()
+  userId!: string;
+}
 
 // ---- Types ----
 
@@ -89,7 +167,13 @@ class TasksService {
     return task;
   }
 
-  create(dto: { title: string; description?: string; priority: TaskPriority; dueDate?: string; tags?: string[] }): Task {
+  create(dto: {
+    title: string;
+    description?: string;
+    priority: TaskPriority;
+    dueDate?: string;
+    tags?: string[];
+  }): Task {
     const task: Task = {
       id: crypto.randomUUID(),
       title: dto.title,
@@ -131,14 +215,50 @@ class TasksService {
 //   POST /tasks             -> create task (validate with CreateTaskDto)
 //   PUT /tasks/:id          -> update task (validate with UpdateTaskDto)
 //   POST /tasks/:id/assign  -> assign task (validate with AssignTaskDto)
+@Controller('tasks')
+class TasksController {
+  constructor(private readonly tasks: TasksService) {}
+
+  @Get()
+  findAll() {
+    return this.tasks.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.tasks.findOne(id);
+  }
+
+  @Post()
+  create(@Body() dto: CreateTaskDto) {
+    return this.tasks.create(dto);
+  }
+
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateTaskDto) {
+    return this.tasks.update(id, dto);
+  }
+
+  @Post(':id/assign')
+  assign(@Param('id') id: string, @Body() dto: AssignTaskDto) {
+    return this.tasks.assign(id, dto.userId);
+  }
+}
 
 // ---- Module ----
 
 // TODO 5: Create TasksModule with controller and service
+@Module({
+  controllers: [TasksController],
+  providers: [TasksService],
+})
+class TasksModule {}
 
 // ---- App Module ----
 
 // TODO 6: Create AppModule importing TasksModule
+@Module({ imports: [TasksModule] })
+class AppModule {}
 
 // ---- Bootstrap ----
 
@@ -167,6 +287,21 @@ class TasksService {
 
 async function bootstrap() {
   // Your bootstrap code here
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter(),
+  );
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  await app.listen(3000, '0.0.0.0');
+  console.log('DTO running on http://localhost:3000');
 }
 
 bootstrap();

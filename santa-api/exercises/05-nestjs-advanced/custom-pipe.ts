@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 export {};
 // ============================================
 // CUSTOM PIPE Exercise
@@ -10,11 +9,20 @@ export {};
 
 import 'reflect-metadata';
 import {
-  Controller, Get, Query, Module, Injectable,
-  PipeTransform, ArgumentMetadata, BadRequestException,
+  Controller,
+  Get,
+  Query,
+  Module,
+  Injectable,
+  PipeTransform,
+  ArgumentMetadata,
+  BadRequestException,
 } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 
 // ---- Pipes ----
 
@@ -26,6 +34,20 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 //     that includes the parameter name from metadata.data
 //   - Return the parsed number
 // - Decorate with @Injectable()
+@Injectable()
+class CustomParseIntPipe implements PipeTransform<string, number> {
+  transform(value: string, metadata: ArgumentMetadata): number {
+    const parsed = parseInt(value, 10);
+
+    if (Number.isNaN(parsed)) {
+      throw new BadRequestException(
+        `Validation failed: "${metadata.data}" must be a number, got "${value}"`,
+      );
+    }
+
+    return parsed;
+  }
+}
 
 // TODO 2: Create a ParseSortPipe
 // - Implement PipeTransform<string, 'asc' | 'desc'>
@@ -34,6 +56,25 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 //   - If the value is not "asc" or "desc", throw BadRequestException
 //   - If value is undefined/empty, return 'asc' as default
 //   - Return the validated sort direction
+@Injectable()
+class ParseSortPipe implements PipeTransform<
+  string | undefined,
+  'asc' | 'desc'
+> {
+  transform(value: string | undefined): 'asc' | 'desc' {
+    if (value === undefined || value === '') return 'asc';
+
+    const normalized = value.toLowerCase();
+
+    if (normalized !== 'asc' && normalized !== 'desc') {
+      throw new BadRequestException(
+        `Sort must be "asc" or "desc", got "${value}"`,
+      );
+    }
+
+    return normalized;
+  }
+}
 
 // ---- Controller ----
 
@@ -43,6 +84,17 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 // - Use @Query('sort', ParseSortPipe) to get sort direction
 // - Return an object: { page, limit, sort, message: 'Params validated!' }
 //
+@Controller('items')
+class ItemsController {
+  @Get()
+  findAll(
+    @Query('page', CustomParseIntPipe) page: number,
+    @Query('limit', CustomParseIntPipe) limit: number,
+    @Query('sort', ParseSortPipe) sort: 'asc' | 'desc',
+  ) {
+    return { page, limit, sort, message: 'Params validated' };
+  }
+}
 // Example requests:
 //   GET /items?page=1&limit=10&sort=desc  -> { page: 1, limit: 10, sort: 'desc', ... }
 //   GET /items?page=abc&limit=10          -> 400 Bad Request
@@ -54,9 +106,26 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 // - Register the controller
 // - Use FastifyAdapter, port 3000
 // - Log the URL and example curl commands
+@Module({ controllers: [ItemsController] })
+class AppModule {}
 
 async function bootstrap() {
   // Your bootstrap code here
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter(),
+  );
+
+  await app.listen(3000, '0.0.0.0');
+  console.log('Custom pipe demo running on http://localhost:3000');
+  console.log('Try:');
+  console.log('  curl "http://localhost:3000/items?page=1&limit=10&sort=desc"');
+  console.log(
+    '  curl "http://localhost:3000/items?page=abc&limit=10"     # 400',
+  );
+  console.log(
+    '  curl "http://localhost:3000/items?page=1&limit=10&sort=xyz" # 400',
+  );
 }
 
 bootstrap();
