@@ -39,3 +39,8 @@ next-env.d.ts
 # teacher-only files (answers/questions)
 QUESTIONS.md
 CANDIDATES.md
+
+# student-only files
+tempCodeRunnerFile.ts
+my.md
+APP_MAP.md

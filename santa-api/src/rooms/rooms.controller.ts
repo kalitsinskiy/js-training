@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import type { CreateRoomDto, JoinRoomDto, Room } from './room.types';
+import { CreateRoomDto } from './dto/create-room.dto';
+import { JoinRoomDto } from './dto/join-room.dto';
+import type { Room } from './room.types';
 import { RoomsService } from './rooms.service';
 
 @Controller('rooms')

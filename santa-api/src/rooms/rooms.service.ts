@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { UsersService } from '../users/users.service';
-import { CreateRoomDto, JoinRoomDto, Room } from './room.types';
+import { CreateRoomDto } from './dto/create-room.dto';
+import { JoinRoomDto } from './dto/join-room.dto';
+import { Room } from './room.types';
 
 @Injectable()
 export class RoomsService {
