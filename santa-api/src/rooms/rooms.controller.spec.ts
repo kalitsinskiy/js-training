@@ -95,7 +95,7 @@ describe('RoomsController', () => {
     const result = controller.join(code, { userId });
     expect(result).toEqual(fakeRoom);
     expect(mockRoomsService.findByCode).toHaveBeenCalledWith(code);
-    expect(mockRoomsService.addMember).toHaveBeenCalledWith(code, userId);
+    expect(mockRoomsService.addMember).toHaveBeenCalledWith(code, { userId });
   });
 
   it('should throw NotFoundException when room not found', () => {

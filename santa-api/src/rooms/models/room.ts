@@ -6,7 +6,3 @@ export interface Room {
   members: string[];
   createdAt: Date;
 }
-
-type CreateRoomDto = Pick<Room, 'name' | 'ownerId'>;
-
-export type { CreateRoomDto };

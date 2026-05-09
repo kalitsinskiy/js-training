@@ -83,21 +83,21 @@ describe('RoomsService', () => {
 
   it('should add a member to a room', () => {
     const room = service.create({ name: 'Test Room', ownerId: '1' });
-    const updatedRoom = service.addMember(room.code, '2');
+    const updatedRoom = service.addMember(room.code, { userId: '2' });
     expect(updatedRoom).toBeDefined();
     expect(updatedRoom?.members).toContain('2');
   });
 
   it('should not add a member if already in the room', () => {
     const room = service.create({ name: 'Test Room', ownerId: '1' });
-    service.addMember(room.code, '2');
-    const updatedRoom = service.addMember(room.code, '2');
+    service.addMember(room.code, { userId: '2' });
+    const updatedRoom = service.addMember(room.code, { userId: '2' });
     expect(updatedRoom).toBeDefined();
     expect(updatedRoom?.members.filter((id) => id === '2').length).toBe(1);
   });
 
   it('should return undefined when adding a member to a non-existent room', () => {
-    const updatedRoom = service.addMember('NONEXIST', '2');
+    const updatedRoom = service.addMember('NONEXIST', { userId: '2' });
     expect(updatedRoom).toBeUndefined();
   });
 });

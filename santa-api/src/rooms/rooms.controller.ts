@@ -7,6 +7,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
+import JoinRoomDto from './dto/join-room.dto';
+import CreateRoomDto from './dto/create-room.dto';
 
 @Controller('rooms')
 export class RoomsController {
@@ -27,16 +29,16 @@ export class RoomsController {
   }
 
   @Post()
-  create(@Body() room: { name: string; ownerId: string }) {
+  create(@Body() room: CreateRoomDto) {
     return this.roomsService.create(room);
   }
 
   @Post(':code/join')
-  join(@Param('code') code: string, @Body() body: { userId: string }) {
+  join(@Param('code') code: string, @Body() joinDto: JoinRoomDto) {
     const room = this.roomsService.findByCode(code);
     if (!room) {
       throw new NotFoundException(`Room with code ${code} not found`);
     }
-    return this.roomsService.addMember(code, body.userId);
+    return this.roomsService.addMember(code, joinDto);
   }
 }

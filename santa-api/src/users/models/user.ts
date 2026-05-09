@@ -4,8 +4,3 @@ export default interface User {
   email: string;
   createdAt: Date;
 }
-
-type CreateUserDto = Omit<User, 'id' | 'createdAt'>;
-type UpdateUserDto = Partial<CreateUserDto>;
-
-export type { CreateUserDto, UpdateUserDto };

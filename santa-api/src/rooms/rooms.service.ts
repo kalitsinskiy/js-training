@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { CreateRoomDto, Room } from './models/room';
+import { Room } from './models/room';
+import CreateRoomDto from './dto/create-room.dto';
+import JoinRoomDto from './dto/join-room.dto';
 
 @Injectable()
 export class RoomsService {
@@ -32,7 +34,8 @@ export class RoomsService {
     return Array.from(this.rooms.values()).find((room) => room.code === code);
   }
 
-  addMember(code: string, userId: string): Room | undefined {
+  addMember(code: string, joinData: JoinRoomDto): Room | undefined {
+    const { userId } = joinData;
     const room = this.findByCode(code);
     if (!room) return undefined;
     if (!room.members.includes(userId)) {
