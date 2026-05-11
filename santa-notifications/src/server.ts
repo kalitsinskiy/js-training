@@ -6,6 +6,7 @@ async function start() {
   try {
     await app.ready();
     await app.listen({ port: app.config.port, host: '0.0.0.0' });
+    app.log.info({ port: app.config.port }, 'santa-notifications listening');
   } catch (error) {
     app.log.error(error);
     process.exit(1);

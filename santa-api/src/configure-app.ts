@@ -14,6 +14,6 @@ export function configureApp(
       transform: true,
     }),
   );
-  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalInterceptors(app.get(LoggingInterceptor));
   app.useGlobalFilters(new AllExceptionsFilter());
 }
