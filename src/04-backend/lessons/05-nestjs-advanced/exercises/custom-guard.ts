@@ -22,6 +22,7 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 // - Use SetMetadata to store an array of role strings under the key 'roles'
 // - Usage: @Roles('admin', 'moderator')
 const ROLES_KEY = 'roles';
+const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
 
 // ---- Guard ----
 
@@ -34,6 +35,23 @@ const ROLES_KEY = 'roles';
 //   d) If the user's role is not in the required roles, throw ForbiddenException
 //      with a message like "Access denied. Required roles: admin, moderator"
 //   e) Return true if authorized
+@Injectable()
+class RolesGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.get<string[]>(ROLES_KEY, context.getHandler());
+    if (!requiredRoles) return true;
+
+    const request = context.switchToHttp().getRequest();
+    const userRole = request.headers['x-user-role'];
+
+    if (!requiredRoles.includes(userRole)) {
+      throw new ForbiddenException(`Access denied. Required roles: ${requiredRoles.join(', ')}`);
+    }
+    return true;
+  }
+}
 
 // ---- Controller ----
 
@@ -52,6 +70,26 @@ const ROLES_KEY = 'roles';
 //   GET /dashboard/public
 //   (no @Roles decorator — should be accessible to everyone)
 //   -> return { message: 'Public dashboard info' }
+@Controller('dashboard')
+@UseGuards(RolesGuard)
+class DashboardController {
+  @Get('stats')
+  @Roles('admin', 'moderator', 'viewer')
+  getStats() {
+    return { views: 1000, users: 50 };
+  }
+
+  @Get('settings')
+  @Roles('admin')
+  getSettings() {
+    return { theme: 'dark', notifications: true };
+  }
+
+  @Get('public')
+  getPublic() {
+    return { message: 'Public dashboard info' };
+  }
+}
 
 // ---- Module & Bootstrap ----
 
@@ -62,9 +100,16 @@ const ROLES_KEY = 'roles';
 //   curl -H "x-user-role: viewer" http://localhost:3000/dashboard/stats            # 200
 //   curl -H "x-user-role: viewer" http://localhost:3000/dashboard/settings         # 403
 //   curl -H "x-user-role: admin" http://localhost:3000/dashboard/settings          # 200
+@Module({
+  controllers: [DashboardController],
+  providers: [RolesGuard],
+})
+class AppModule {}
 
 async function bootstrap() {
-  // Your bootstrap code here
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
+  await app.listen(3000);
+  console.log('Server running at http://localhost:3000');
 }
 
 bootstrap();

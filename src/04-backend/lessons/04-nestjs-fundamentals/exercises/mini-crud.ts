@@ -3,7 +3,7 @@ export {};
 // ============================================
 // MINI CRUD Exercise
 // ============================================
-// ⚠️  Run from santa-api/:  cd santa-api && npx ts-node exercises/04-nestjs-fundamentals/mini-crud.ts
+// ⚠️  Run with ts-node from santa-api/:  cd santa-api && npx ts-node exercises/04-nestjs-fundamentals/mini-crud.ts
 //
 // Build a complete CRUD API for a "products" resource using NestJS.
 //
@@ -23,9 +23,18 @@ export {};
 
 import 'reflect-metadata';
 import {
-  Controller, Get, Post, Put, Delete,
-  Param, Body, Module, Injectable,
-  NotFoundException, HttpCode, HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Module,
+  Injectable,
+  NotFoundException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -67,6 +76,48 @@ interface UpdateProductDto {
 //   update(id: string, dto: UpdateProductDto): Product — find existing or throw 404, merge fields, update updatedAt
 //   remove(id: string): void                        — find existing or throw 404, delete from map
 
+@Injectable()
+class ProductsService {
+  private products = new Map<string, Product>();
+
+  constructor() {}
+
+  findAll(): Product[] {
+    return Array.from(this.products.values());
+  }
+
+  findOne(id: string): Product {
+    const product = this.products.get(id);
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+    return product;
+  }
+
+  create(dto: CreateProductDto): Product {
+    const id = crypto.randomUUID();
+    const product: Product = {
+      id,
+      ...dto,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.products.set(id, product);
+    return product;
+  }
+
+  update(id: string, dto: UpdateProductDto): Product {
+    const product = this.findOne(id);
+    const updatedProduct = { ...product, ...dto, updatedAt: new Date() };
+    this.products.set(id, updatedProduct);
+    return updatedProduct;
+  }
+
+  remove(id: string): void {
+    this.findOne(id); // Check if product exists
+    this.products.delete(id);
+  }
+}
 
 // ---- Controller ----
 
@@ -80,6 +131,40 @@ interface UpdateProductDto {
 //   @Put(':id')    update(@Param, @Body)  — update product (200) or 404
 //   @Delete(':id') remove(@Param)         — delete product, return 204 (use @HttpCode)
 
+@Controller('products')
+class ProductsController {
+  private readonly productsService: ProductsService;
+
+  constructor(productsService: ProductsService) {
+    this.productsService = productsService;
+  }
+
+  @Get()
+  findAll() {
+    return this.productsService.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.productsService.findOne(id);
+  }
+
+  @Post()
+  create(@Body() dto: CreateProductDto) {
+    return this.productsService.create(dto);
+  }
+
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
+    return this.productsService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id') id: string) {
+    this.productsService.remove(id);
+  }
+}
 
 // ---- Module ----
 
@@ -87,12 +172,20 @@ interface UpdateProductDto {
 // - Register ProductsController in controllers
 // - Register ProductsService in providers
 
+@Module({
+  controllers: [ProductsController],
+  providers: [ProductsService],
+})
+class ProductsModule {}
 
 // ---- App Module ----
 
 // TODO 4: Create an AppModule
 // - Import ProductsModule
-
+@Module({
+  imports: [ProductsModule],
+})
+class AppModule {}
 
 // ---- Bootstrap ----
 
@@ -102,7 +195,9 @@ interface UpdateProductDto {
 // - Log the URL to console
 
 async function bootstrap() {
-  // Your bootstrap code here
+  const app = await NestFactory.create(AppModule, new FastifyAdapter());
+  await app.listen(3000);
+  console.log('Server running on http://localhost:3000');
 }
 
 bootstrap();
