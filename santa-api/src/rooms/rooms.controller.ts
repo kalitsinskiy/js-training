@@ -9,22 +9,25 @@ export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
   @Post()
-  create(@Body() body: CreateRoomDto): Room {
+  create(@Body() body: CreateRoomDto): Promise<Room> {
     return this.roomsService.create(body);
   }
 
   @Get()
-  findAll(): Room[] {
+  findAll(): Promise<Room[]> {
     return this.roomsService.findAll();
   }
 
   @Get(':id')
-  findById(@Param('id') id: string): Room {
+  findById(@Param('id') id: string): Promise<Room> {
     return this.roomsService.findById(id);
   }
 
   @Post(':code/join')
-  joinByCode(@Param('code') code: string, @Body() body: JoinRoomDto): Room {
+  joinByCode(
+    @Param('code') code: string,
+    @Body() body: JoinRoomDto,
+  ): Promise<Room> {
     return this.roomsService.joinByCode(code, body);
   }
 }

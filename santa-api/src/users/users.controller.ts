@@ -8,12 +8,12 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  create(@Body() body: CreateUserDto): User {
+  create(@Body() body: CreateUserDto): Promise<User> {
     return this.usersService.create(body);
   }
 
   @Get(':id')
-  findById(@Param('id') id: string): User {
+  findById(@Param('id') id: string): Promise<User> {
     return this.usersService.findById(id);
   }
 }

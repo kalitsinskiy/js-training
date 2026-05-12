@@ -18,16 +18,16 @@ export class WishlistController {
   update(
     @Param('roomId') roomId: string,
     @Body() body: UpdateWishlistDto,
-  ): Wishlist {
+  ): Promise<Wishlist> {
     return this.wishlistService.set(roomId, body.userId, body.items);
   }
 
   @Get(':userId')
-  findOne(
+  async findOne(
     @Param('roomId') roomId: string,
     @Param('userId') userId: string,
-  ): Wishlist {
-    const wishlist = this.wishlistService.get(roomId, userId);
+  ): Promise<Wishlist> {
+    const wishlist = await this.wishlistService.get(roomId, userId);
 
     if (!wishlist) {
       throw new NotFoundException(

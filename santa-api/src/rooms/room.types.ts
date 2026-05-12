@@ -4,4 +4,6 @@ export interface Room {
   ownerId: string;
   code: string;
   members: string[];
+  status: 'pending' | 'drawn';
+  drawDate?: string;
 }

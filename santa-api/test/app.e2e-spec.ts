@@ -1,9 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { getConnectionToken } from '@nestjs/mongoose';
 import request from 'supertest';
+import { randomUUID } from 'node:crypto';
 import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
+import type { Connection } from 'mongoose';
 import { AppModule } from './../src/app.module';
 import { configureApp } from './../src/configure-app';
 
@@ -18,6 +21,7 @@ type UserBody = {
   id: string;
   name: string;
   email: string;
+  role: 'user' | 'admin';
 };
 
 type RoomBody = {
@@ -26,16 +30,29 @@ type RoomBody = {
   ownerId: string;
   code: string;
   members: string[];
+  status: 'pending' | 'drawn';
+  drawDate?: string;
+};
+
+type WishlistItemBody = {
+  name: string;
+  url?: string;
+  priority?: number;
 };
 
 type WishlistBody = {
   roomId: string;
   userId: string;
-  items: string[];
+  items: WishlistItemBody[];
 };
 
 describe('Santa API (e2e)', () => {
   let app: NestFastifyApplication;
+  const mongoUrl = `mongodb://localhost:27017/santa-api-e2e-${randomUUID()}`;
+
+  beforeAll(() => {
+    process.env.MONGO_URL = mongoUrl;
+  });
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -48,6 +65,13 @@ describe('Santa API (e2e)', () => {
     configureApp(app);
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
+
+    const connection = app.get<Connection>(getConnectionToken());
+    if (!connection.db) {
+      throw new Error('MongoDB connection is not ready');
+    }
+
+    await connection.db.dropDatabase();
   });
 
   // Verifies the default root route still responds with the Nest scaffold text.
@@ -95,6 +119,7 @@ describe('Santa API (e2e)', () => {
       name: 'North Pole Ops',
       ownerId: owner.id,
       members: [owner.id],
+      status: 'pending',
     });
     expect(room.code).toHaveLength(6);
 
@@ -157,7 +182,7 @@ describe('Santa API (e2e)', () => {
 
         expect(error.success).toBe(false);
         expect(error.statusCode).toBe(400);
-        expect(error.message).toContain('userId must be a UUID');
+        expect(error.message).toContain('userId must be a mongodb id');
       });
   });
 
@@ -216,7 +241,11 @@ describe('Santa API (e2e)', () => {
       .post(`/rooms/${room.id}/wishlist`)
       .send({
         userId: owner.id,
-        items: ['socks', 'book', 'mug'],
+        items: [
+          { name: 'socks', priority: 1 },
+          { name: 'book' },
+          { name: 'mug', url: 'https://example.com/mug' },
+        ],
       })
       .expect(201);
     const wishlist = updateResponse.body as WishlistBody;
@@ -224,7 +253,11 @@ describe('Santa API (e2e)', () => {
     expect(wishlist).toEqual({
       roomId: room.id,
       userId: owner.id,
-      items: ['socks', 'book', 'mug'],
+      items: [
+        { name: 'socks', priority: 1 },
+        { name: 'book' },
+        { name: 'mug', url: 'https://example.com/mug' },
+      ],
     });
 
     await request(app.getHttpServer())
@@ -250,5 +283,9 @@ describe('Santa API (e2e)', () => {
 
   afterEach(async () => {
     await app.close();
+  });
+
+  afterAll(() => {
+    delete process.env.MONGO_URL;
   });
 });

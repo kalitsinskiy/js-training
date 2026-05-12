@@ -1,30 +1,52 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './user.types';
+import { User as UserModel } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
-  private readonly users = new Map<string, User>();
+  constructor(
+    @InjectModel(UserModel.name)
+    private readonly userModel: Model<UserModel>,
+  ) {}
 
-  create({ name, email }: CreateUserDto): User {
-    const user: User = {
-      id: randomUUID(),
-      name,
+  async create({ name, email }: CreateUserDto): Promise<User> {
+    const user = await this.userModel.create({
       email,
-    };
+      displayName: name,
+      passwordHash: 'TODO_LESSON_08',
+    });
 
-    this.users.set(user.id, user);
-    return user;
+    return this.toUser(user);
   }
 
-  findById(id: string): User {
-    const user = this.users.get(id);
+  async findById(id: string): Promise<User> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new NotFoundException(`User ${id} not found`);
+    }
+
+    const user = await this.userModel.findById(id).exec();
 
     if (!user) {
       throw new NotFoundException(`User ${id} not found`);
     }
 
-    return user;
+    return this.toUser(user);
+  }
+
+  private toUser(user: {
+    _id: Types.ObjectId;
+    displayName: string;
+    email: string;
+    role: 'user' | 'admin';
+  }): User {
+    return {
+      id: user._id.toString(),
+      name: user.displayName,
+      email: user.email,
+      role: user.role,
+    };
   }
 }

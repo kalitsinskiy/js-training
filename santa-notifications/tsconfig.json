@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "commonjs",
+    "module": "nodenext", //"commonjs"
     "strict": true,
     "esModuleInterop": true,
-    "ignoreDeprecations": "6.0",
+    //"ignoreDeprecations": "6.0",
     "outDir": "./dist",
     "rootDir": "./src",
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext", //"node"
     "skipLibCheck": true,
     "types": ["node"]
   },

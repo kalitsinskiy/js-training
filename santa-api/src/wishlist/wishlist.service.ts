@@ -1,35 +1,61 @@
 import { Injectable } from '@nestjs/common';
-import { Wishlist } from './wishlist.types';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { Wishlist, WishlistItem } from './wishlist.types';
+import { Wishlist as WishlistModel } from './schemas/wishlist.schema';
 
 @Injectable()
 export class WishlistService {
-  private readonly wishlists = new Map<string, string[]>();
+  constructor(
+    @InjectModel(WishlistModel.name)
+    private readonly wishlistModel: Model<WishlistModel>,
+  ) {}
 
-  set(roomId: string, userId: string, items: string[]): Wishlist {
-    this.wishlists.set(this.getKey(roomId, userId), items);
+  async set(
+    roomId: string,
+    userId: string,
+    items: WishlistItem[],
+  ): Promise<Wishlist> {
+    const wishlist = await this.wishlistModel
+      .findOneAndUpdate(
+        { userId, roomId },
+        { $set: { items } },
+        { upsert: true, new: true },
+      )
+      .exec();
 
-    return {
-      roomId,
-      userId,
-      items,
-    };
+    return this.toWishlist(wishlist);
   }
 
-  get(roomId: string, userId: string): Wishlist | undefined {
-    const items = this.wishlists.get(this.getKey(roomId, userId));
-
-    if (!items) {
+  async get(roomId: string, userId: string): Promise<Wishlist | undefined> {
+    if (!Types.ObjectId.isValid(roomId) || !Types.ObjectId.isValid(userId)) {
       return undefined;
     }
 
-    return {
-      roomId,
-      userId,
-      items,
-    };
+    const wishlist = await this.wishlistModel
+      .findOne({ roomId, userId })
+      .exec();
+
+    if (!wishlist) {
+      return undefined;
+    }
+
+    return this.toWishlist(wishlist);
   }
 
-  private getKey(roomId: string, userId: string): string {
-    return `${roomId}:${userId}`;
+  private toWishlist(wishlist: {
+    roomId: Types.ObjectId;
+    userId: Types.ObjectId;
+    items: WishlistItem[];
+  }): Wishlist {
+    return {
+      roomId: wishlist.roomId.toString(),
+      userId: wishlist.userId.toString(),
+      items: wishlist.items.map((item) => ({
+        name: item.name,
+        url: item.url,
+        priority: item.priority,
+      })),
+    };
   }
 }
