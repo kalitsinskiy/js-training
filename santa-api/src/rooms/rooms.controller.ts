@@ -1,16 +1,22 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { JoinRoomDto } from './dto/join-room.dto';
 import type { Room } from './room.types';
 import { RoomsService } from './rooms.service';
 
 @Controller('rooms')
+@UseGuards(JwtAuthGuard)
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
   @Post()
-  create(@Body() body: CreateRoomDto): Promise<Room> {
-    return this.roomsService.create(body);
+  create(
+    @Body() body: CreateRoomDto,
+    @CurrentUser('id') userId: string,
+  ): Promise<Room> {
+    return this.roomsService.create(body, userId);
   }
 
   @Get()
@@ -26,8 +32,9 @@ export class RoomsController {
   @Post(':code/join')
   joinByCode(
     @Param('code') code: string,
-    @Body() body: JoinRoomDto,
+    @Body() _body: JoinRoomDto,
+    @CurrentUser('id') userId: string,
   ): Promise<Room> {
-    return this.roomsService.joinByCode(code, body);
+    return this.roomsService.joinByCode(code, userId);
   }
 }

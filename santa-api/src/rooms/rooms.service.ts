@@ -15,8 +15,8 @@ export class RoomsService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create({ name, ownerId }: CreateRoomDto): Promise<Room> {
-    this.usersService.findById(ownerId);
+  async create({ name }: CreateRoomDto, ownerId: string): Promise<Room> {
+    await this.usersService.findById(ownerId);
 
     const room = await this.roomModel.create({
       name,
@@ -47,7 +47,7 @@ export class RoomsService {
     return this.toRoom(room);
   }
 
-  async joinByCode(code: string, { userId }: JoinRoomDto): Promise<Room> {
+  async joinByCode(code: string, userId: string): Promise<Room> {
     await this.usersService.findById(userId);
 
     const room = await this.roomModel

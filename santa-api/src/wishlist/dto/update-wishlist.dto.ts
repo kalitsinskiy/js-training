@@ -2,7 +2,6 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsInt,
-  IsMongoId,
   IsOptional,
   IsString,
   IsUrl,
@@ -28,9 +27,6 @@ export class WishlistItemDto {
 }
 
 export class UpdateWishlistDto {
-  @IsMongoId()
-  userId!: string;
-
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => WishlistItemDto)

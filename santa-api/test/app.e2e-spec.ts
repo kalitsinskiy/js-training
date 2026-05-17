@@ -19,9 +19,13 @@ type ErrorBody = {
 
 type UserBody = {
   id: string;
-  name: string;
+  displayName: string;
   email: string;
   role: 'user' | 'admin';
+};
+
+type AuthBody = UserBody & {
+  accessToken: string;
 };
 
 type RoomBody = {
@@ -52,6 +56,7 @@ describe('Santa API (e2e)', () => {
 
   beforeAll(() => {
     process.env.MONGO_URL = mongoUrl;
+    process.env.JWT_SECRET = 'test-secret';
   });
 
   beforeEach(async () => {
@@ -74,43 +79,129 @@ describe('Santa API (e2e)', () => {
     await connection.db.dropDatabase();
   });
 
-  // Verifies the default root route still responds with the Nest scaffold text.
-  it('/ (GET)', () => {
+  async function registerUser(
+    email: string,
+    displayName: string,
+    password = 'SecretPass1',
+  ): Promise<AuthBody> {
+    const response = await request(app.getHttpServer())
+      .post('/api/auth/register')
+      .send({
+        email,
+        password,
+        displayName,
+      })
+      .expect(201);
+
+    return response.body as AuthBody;
+  }
+
+  function withAuth(token: string): { Authorization: string } {
+    return {
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
+  it('/api (GET)', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/api')
       .expect(200)
       .expect('Hello World!');
   });
 
-  // Exercises the happy path: create two users, create a room, fetch it back,
-  // and join the second user by room code.
-  it('creates users and rooms, lists them, and joins by code', async () => {
-    // Create the room owner and the member that will join later.
-    const ownerResponse = await request(app.getHttpServer())
-      .post('/users')
-      .send({ name: 'Owner Participant', email: 'owner@santa.test' })
-      .expect(201);
-    const owner = ownerResponse.body as UserBody;
-
-    const memberResponse = await request(app.getHttpServer())
-      .post('/users')
-      .send({ name: 'Helper Participant', email: 'helper@santa.test' })
-      .expect(201);
-    const member = memberResponse.body as UserBody;
+  it('registers, logs in, and returns the authenticated profile', async () => {
+    const registeredUser = await registerUser(
+      'owner@santa.test',
+      'Owner Participant',
+    );
 
     await request(app.getHttpServer())
-      .get(`/users/${owner.id}`)
+      .get('/api/users/me')
+      .set(withAuth(registeredUser.accessToken))
       .expect(200)
       .expect(({ body }) => {
-        expect(body).toEqual(owner);
+        expect(body).toEqual({
+          id: registeredUser.id,
+          email: 'owner@santa.test',
+          displayName: 'Owner Participant',
+          role: 'user',
+        });
       });
 
-    // Create a room owned by the first user and confirm the generated shape.
+    await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({
+        email: 'OWNER@santa.test',
+        password: 'SecretPass1',
+      })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.accessToken).toEqual(expect.any(String));
+      });
+  });
+
+  it('rejects duplicate registration and invalid login credentials', async () => {
+    await registerUser('alice@santa.test', 'Alice');
+
+    await request(app.getHttpServer())
+      .post('/api/auth/register')
+      .send({
+        email: 'alice@santa.test',
+        password: 'SecretPass1',
+        displayName: 'Alice Again',
+      })
+      .expect(409)
+      .expect(({ body }) => {
+        const error = body as ErrorBody;
+
+        expect(error).toMatchObject({
+          success: false,
+          statusCode: 409,
+          message: 'Email is already registered',
+        });
+      });
+
+    await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({
+        email: 'alice@santa.test',
+        password: 'wrongpass',
+      })
+      .expect(401)
+      .expect(({ body }) => {
+        const error = body as ErrorBody;
+
+        expect(error).toMatchObject({
+          success: false,
+          statusCode: 401,
+          message: 'Invalid credentials',
+        });
+      });
+  });
+
+  it('requires a valid token for protected routes', async () => {
+    const registeredUser = await registerUser('token@santa.test', 'Token User');
+
+    await request(app.getHttpServer()).get('/api/users/me').expect(401);
+
+    await request(app.getHttpServer())
+      .get('/api/users/me')
+      .set(withAuth(`${registeredUser.accessToken}tampered`))
+      .expect(401);
+  });
+
+  it('creates rooms, lists them, and joins by code as authenticated users', async () => {
+    const owner = await registerUser('owner@santa.test', 'Owner Participant');
+    const member = await registerUser(
+      'helper@santa.test',
+      'Helper Participant',
+    );
+
     const roomResponse = await request(app.getHttpServer())
-      .post('/rooms')
+      .post('/api/rooms')
+      .set(withAuth(owner.accessToken))
       .send({
         name: 'North Pole Ops',
-        ownerId: owner.id,
       })
       .expect(201);
     const room = roomResponse.body as RoomBody;
@@ -123,44 +214,60 @@ describe('Santa API (e2e)', () => {
     });
     expect(room.code).toHaveLength(6);
 
-    // Verify both the collection endpoint and the single-room endpoint.
-    await request(app.getHttpServer()).get('/rooms').expect(200).expect([room]);
+    await request(app.getHttpServer())
+      .get('/api/rooms')
+      .set(withAuth(owner.accessToken))
+      .expect(200)
+      .expect([room]);
 
     await request(app.getHttpServer())
-      .get(`/rooms/${room.id}`)
+      .get(`/api/rooms/${room.id}`)
+      .set(withAuth(owner.accessToken))
       .expect(200)
       .expect(({ body }) => {
         expect(body).toEqual(room);
       });
 
-    // Join by code and confirm the new member is appended to the room.
     const joinedRoomResponse = await request(app.getHttpServer())
-      .post(`/rooms/${room.code}/join`)
-      .send({ userId: member.id })
+      .post(`/api/rooms/${room.code}/join`)
+      .set(withAuth(member.accessToken))
+      .send({})
       .expect(201);
     const joinedRoom = joinedRoomResponse.body as RoomBody;
 
     expect(joinedRoom.members).toEqual([owner.id, member.id]);
   });
 
-  // Confirms the API returns 404 when requested resources do not exist.
-  it('returns 404 for missing users and rooms', async () => {
+  it('updates the authenticated user profile', async () => {
+    const registeredUser = await registerUser(
+      'profile@santa.test',
+      'Profile User',
+    );
+
     await request(app.getHttpServer())
-      .get('/users/missing-user')
-      .expect(404)
+      .patch('/api/users/me')
+      .set(withAuth(registeredUser.accessToken))
+      .send({ displayName: 'Updated Profile User' })
+      .expect(200)
       .expect(({ body }) => {
-        const error = body as ErrorBody;
-
-        expect(error).toMatchObject({
-          success: false,
-          statusCode: 404,
-          message: 'User missing-user not found',
+        expect(body).toEqual({
+          id: registeredUser.id,
+          email: 'profile@santa.test',
+          displayName: 'Updated Profile User',
+          role: 'user',
         });
-        expect(error.timestamp).toEqual(expect.any(String));
       });
+  });
+
+  it('returns 404 for missing rooms', async () => {
+    const registeredUser = await registerUser(
+      'missing@santa.test',
+      'Missing User',
+    );
 
     await request(app.getHttpServer())
-      .get('/rooms/missing-room')
+      .get('/api/rooms/missing-room')
+      .set(withAuth(registeredUser.accessToken))
       .expect(404)
       .expect(({ body }) => {
         const error = body as ErrorBody;
@@ -174,22 +281,25 @@ describe('Santa API (e2e)', () => {
       });
 
     await request(app.getHttpServer())
-      .post('/rooms/MISSING/join')
-      .send({ userId: 'missing-user' })
-      .expect(400)
+      .post('/api/rooms/MISSING/join')
+      .set(withAuth(registeredUser.accessToken))
+      .send({})
+      .expect(404)
       .expect(({ body }) => {
         const error = body as ErrorBody;
 
-        expect(error.success).toBe(false);
-        expect(error.statusCode).toBe(400);
-        expect(error.message).toContain('userId must be a mongodb id');
+        expect(error).toMatchObject({
+          success: false,
+          statusCode: 404,
+          message: 'Room with code MISSING not found',
+        });
       });
   });
 
   it('rejects invalid request bodies and unknown properties', async () => {
     await request(app.getHttpServer())
-      .post('/users')
-      .send({ name: 'A', email: 'nope' })
+      .post('/api/auth/register')
+      .send({ email: 'nope', password: 'short', displayName: '' })
       .expect(400)
       .expect(({ body }) => {
         const error = body as ErrorBody;
@@ -198,17 +308,19 @@ describe('Santa API (e2e)', () => {
         expect(error.statusCode).toBe(400);
         expect(error.message).toEqual(
           expect.arrayContaining([
-            'name must be longer than or equal to 2 characters',
             'email must be an email',
+            'password must be longer than or equal to 8 characters',
+            'displayName must be longer than or equal to 1 characters',
           ]),
         );
       });
 
     await request(app.getHttpServer())
-      .post('/users')
+      .post('/api/auth/register')
       .send({
-        name: 'Alice',
         email: 'alice@santa.test',
+        password: 'SecretPass1',
+        displayName: 'Alice',
         admin: true,
       })
       .expect(400)
@@ -221,26 +333,25 @@ describe('Santa API (e2e)', () => {
       });
   });
 
-  it('stores and retrieves wishlists by room and user', async () => {
-    const ownerResponse = await request(app.getHttpServer())
-      .post('/users')
-      .send({ name: 'Wishlist Owner', email: 'wishlist-owner@santa.test' })
-      .expect(201);
-    const owner = ownerResponse.body as UserBody;
+  it('stores and retrieves the authenticated user wishlist', async () => {
+    const owner = await registerUser(
+      'wishlist-owner@santa.test',
+      'Wishlist Owner',
+    );
 
     const roomResponse = await request(app.getHttpServer())
-      .post('/rooms')
+      .post('/api/rooms')
+      .set(withAuth(owner.accessToken))
       .send({
         name: 'Wishlist Room',
-        ownerId: owner.id,
       })
       .expect(201);
     const room = roomResponse.body as RoomBody;
 
     const updateResponse = await request(app.getHttpServer())
-      .post(`/rooms/${room.id}/wishlist`)
+      .post(`/api/rooms/${room.id}/wishlist`)
+      .set(withAuth(owner.accessToken))
       .send({
-        userId: owner.id,
         items: [
           { name: 'socks', priority: 1 },
           { name: 'book' },
@@ -261,22 +372,28 @@ describe('Santa API (e2e)', () => {
     });
 
     await request(app.getHttpServer())
-      .get(`/rooms/${room.id}/wishlist/${owner.id}`)
+      .get(`/api/rooms/${room.id}/wishlist/me`)
+      .set(withAuth(owner.accessToken))
       .expect(200)
       .expect(({ body }) => {
         expect(body).toEqual(wishlist);
       });
 
     await request(app.getHttpServer())
-      .get(`/rooms/${room.id}/wishlist/missing-user`)
+      .get(`/api/rooms/${room.id}/wishlist/me`)
+      .set(
+        withAuth(
+          (await registerUser('other@santa.test', 'Other User')).accessToken,
+        ),
+      )
       .expect(404)
       .expect(({ body }) => {
         const error = body as ErrorBody;
 
         expect(error.success).toBe(false);
         expect(error.statusCode).toBe(404);
-        expect(error.message).toBe(
-          `Wishlist for room ${room.id} and user missing-user not found`,
+        expect(error.message).toContain(
+          `Wishlist for room ${room.id} and user `,
         );
       });
   });
@@ -287,5 +404,6 @@ describe('Santa API (e2e)', () => {
 
   afterAll(() => {
     delete process.env.MONGO_URL;
+    delete process.env.JWT_SECRET;
   });
 });

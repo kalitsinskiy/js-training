@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
+import { AuthModule } from './auth/auth.module';
 import { AppService } from './app.service';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { RoomsModule } from './rooms/rooms.module';
@@ -29,6 +30,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
             : undefined,
       },
     }),
+    AuthModule,
     UsersModule,
     RoomsModule,
     WishlistModule,
