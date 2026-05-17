@@ -1,58 +1,69 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { WishlistController } from './wishlist.controller';
 import { WishlistService } from './wishlist.service';
 
+const mockService = {
+  set: jest.fn<() => Promise<any>>(),
+  get: jest.fn<() => Promise<any>>(),
+};
+
 describe('WishlistController', () => {
   let controller: WishlistController;
-  let service: WishlistService;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WishlistController],
-      providers: [WishlistService],
+      providers: [{ provide: WishlistService, useValue: mockService }],
     }).compile();
 
     controller = module.get<WishlistController>(WishlistController);
-    service = module.get<WishlistService>(WishlistService);
   });
 
   describe('set', () => {
-    it('should store and return the wishlist', () => {
-      const result = controller.set('room-1', {
-        userId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-        items: ['toy car', 'book'],
+    it('should store and return the wishlist', async () => {
+      const mockWishlist = {
+        roomId: '507f1f77bcf86cd799439011',
+        userId: '507f1f77bcf86cd799439012',
+        items: [{ name: 'toy car' }, { name: 'book' }],
+      };
+      mockService.set.mockResolvedValue(mockWishlist);
+
+      const result = await controller.set('507f1f77bcf86cd799439011', {
+        userId: '507f1f77bcf86cd799439012',
+        items: [{ name: 'toy car' }, { name: 'book' }],
       });
 
-      expect(result).toEqual({
-        roomId: 'room-1',
-        userId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-        items: ['toy car', 'book'],
-      });
+      expect(result).toEqual(mockWishlist);
     });
   });
 
   describe('get', () => {
-    it('should return the wishlist for an existing entry', () => {
-      service.set('room-1', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', [
-        'toy car',
-        'book',
-      ]);
+    it('should return the wishlist for an existing entry', async () => {
+      const mockWishlist = {
+        roomId: '507f1f77bcf86cd799439011',
+        userId: '507f1f77bcf86cd799439012',
+        items: [{ name: 'toy car' }, { name: 'book' }],
+      };
+      mockService.get.mockResolvedValue(mockWishlist);
 
-      expect(
-        controller.get('room-1', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
-      ).toEqual({
-        roomId: 'room-1',
-        userId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-        items: ['toy car', 'book'],
-      });
+      const result = await controller.get(
+        '507f1f77bcf86cd799439011',
+        '507f1f77bcf86cd799439012',
+      );
+
+      expect(result).toEqual(mockWishlist);
     });
 
-    it('should throw NotFoundException for an unknown roomId/userId combination', () => {
-      expect(() => controller.get('room-1', 'non-existent-user')).toThrow(
-        NotFoundException,
-      );
+    it('should throw NotFoundException for an unknown roomId/userId combination', async () => {
+      mockService.get.mockResolvedValue(null);
+
+      await expect(
+        controller.get('507f1f77bcf86cd799439011', 'non-existent-user'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

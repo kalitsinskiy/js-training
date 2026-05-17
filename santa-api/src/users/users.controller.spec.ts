@@ -1,53 +1,66 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
+const mockService = {
+  create: jest.fn<() => Promise<any>>(),
+  findById: jest.fn<() => Promise<any>>(),
+};
+
 describe('UsersController', () => {
   let controller: UsersController;
-  let service: UsersService;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
-      providers: [UsersService],
+      providers: [{ provide: UsersService, useValue: mockService }],
     }).compile();
 
     controller = module.get<UsersController>(UsersController);
-    service = module.get<UsersService>(UsersService);
   });
 
   describe('create', () => {
-    it('should create and return a new user', () => {
-      const result = controller.create({
+    it('should create and return a new user', async () => {
+      const mockUser = {
+        _id: '507f1f77bcf86cd799439011',
+        email: 'alice@example.com',
+        displayName: 'Alice',
+        role: 'user',
+      };
+      mockService.create.mockResolvedValue(mockUser);
+
+      const result = await controller.create({
         name: 'Alice',
         email: 'alice@example.com',
       });
 
-      expect(result).toMatchObject({
-        name: 'Alice',
-        email: 'alice@example.com',
-      });
-      expect(result.id).toBeDefined();
-      expect(result.createdAt).toBeDefined();
+      expect(result).toEqual(mockUser);
     });
   });
 
   describe('findOne', () => {
-    it('should return a user by id', () => {
-      const created = service.create({
-        name: 'Alice',
+    it('should return a user by id', async () => {
+      const mockUser = {
+        _id: '507f1f77bcf86cd799439011',
         email: 'alice@example.com',
-      });
+      };
+      mockService.findById.mockResolvedValue(mockUser);
 
-      expect(controller.findOne(created.id)).toEqual(created);
+      const result = await controller.findOne('507f1f77bcf86cd799439011');
+
+      expect(result).toEqual(mockUser);
     });
 
-    it('should throw NotFoundException for unknown id', () => {
-      expect(() => controller.findOne('non-existent-id')).toThrow(
-        NotFoundException,
-      );
+    it('should throw NotFoundException for unknown id', async () => {
+      mockService.findById.mockResolvedValue(null);
+
+      await expect(
+        controller.findOne('507f1f77bcf86cd799439011'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

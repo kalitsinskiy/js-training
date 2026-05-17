@@ -1,14 +1,34 @@
-import { IsArray, IsString, IsUUID, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsMongoId,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
+
+export class WishlistItemDto {
+  @IsString()
+  @MinLength(1)
+  name!: string;
+
+  @IsString()
+  @IsOptional()
+  url?: string;
+
+  @IsNumber()
+  @IsOptional()
+  priority?: number;
+}
 
 export class UpdateWishlistDto {
-  @IsUUID('4', { message: 'User ID must be a valid UUID' })
+  @IsMongoId({ message: 'User ID must be a valid MongoDB ObjectId' })
   userId!: string;
 
   @IsArray({ message: 'Items must be an array' })
-  @IsString({ each: true, message: 'Each item must be a string' })
-  @MinLength(1, {
-    each: true,
-    message: 'Each item must be at least 1 character long',
-  })
-  items!: string[];
+  @ValidateNested({ each: true })
+  @Type(() => WishlistItemDto)
+  items!: WishlistItemDto[];
 }

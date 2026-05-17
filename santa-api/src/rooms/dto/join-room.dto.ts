@@ -1,6 +1,6 @@
-import { IsUUID } from 'class-validator';
+import { IsMongoId } from 'class-validator';
 
 export class JoinRoomDto {
-  @IsUUID('4', { message: 'User ID must be a valid UUID' })
+  @IsMongoId({ message: 'User ID must be a valid MongoDB ObjectId' })
   userId!: string;
 }

@@ -1,91 +1,98 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { RoomsController } from './rooms.controller';
 import { RoomsService } from './rooms.service';
 
-const OWNER_ID = '22222222-2222-2222-2222-222222222222';
-const USER_ID = '33333333-3333-3333-3333-333333333333';
+const OWNER_ID = '507f1f77bcf86cd799439011';
+const USER_ID = '507f1f77bcf86cd799439012';
+
+const mockService = {
+  create: jest.fn<() => Promise<any>>(),
+  findAll: jest.fn<() => Promise<any>>(),
+  findById: jest.fn<() => Promise<any>>(),
+  addMember: jest.fn<() => Promise<any>>(),
+};
 
 describe('RoomsController', () => {
   let controller: RoomsController;
-  let service: RoomsService;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RoomsController],
-      providers: [RoomsService],
+      providers: [{ provide: RoomsService, useValue: mockService }],
     }).compile();
 
     controller = module.get<RoomsController>(RoomsController);
-    service = module.get<RoomsService>(RoomsService);
   });
 
   describe('create', () => {
-    it('should create and return a new room', () => {
-      const result = controller.create({
+    it('should create and return a new room', async () => {
+      const mockRoom = {
+        _id: '507f1f77bcf86cd799439011',
         name: 'Test Room',
-        ownerId: OWNER_ID,
-      });
+        creatorId: OWNER_ID,
+        inviteCode: 'ABC123',
+        participants: [OWNER_ID],
+        status: 'pending',
+      };
+      mockService.create.mockResolvedValue(mockRoom);
 
-      expect(result).toMatchObject({
-        name: 'Test Room',
-        ownerId: OWNER_ID,
-        members: [OWNER_ID],
-      });
-      expect(result.id).toBeDefined();
-      expect(result.code).toBeDefined();
+      const result = await controller.create({ name: 'Test Room', ownerId: OWNER_ID });
+
+      expect(result).toEqual(mockRoom);
     });
   });
 
   describe('findAll', () => {
-    it('should return empty array when no rooms exist', () => {
-      expect(controller.findAll()).toEqual([]);
+    it('should return empty array when no rooms exist', async () => {
+      mockService.findAll.mockResolvedValue([]);
+
+      expect(await controller.findAll()).toEqual([]);
     });
 
-    it('should return all created rooms', () => {
-      service.create({ name: 'Room A', ownerId: OWNER_ID });
-      service.create({ name: 'Room B', ownerId: OWNER_ID });
+    it('should return all created rooms', async () => {
+      mockService.findAll.mockResolvedValue([{}, {}]);
 
-      expect(controller.findAll()).toHaveLength(2);
+      expect(await controller.findAll()).toHaveLength(2);
     });
   });
 
   describe('findOne', () => {
-    it('should return a room by id', () => {
-      const created = service.create({ name: 'Test Room', ownerId: OWNER_ID });
+    it('should return a room by id', async () => {
+      const mockRoom = { _id: '507f1f77bcf86cd799439011', name: 'Test Room' };
+      mockService.findById.mockResolvedValue(mockRoom);
 
-      expect(controller.findOne(created.id)).toEqual(created);
+      expect(await controller.findOne('507f1f77bcf86cd799439011')).toEqual(mockRoom);
     });
 
-    it('should throw NotFoundException for unknown id', () => {
-      expect(() => controller.findOne('non-existent-id')).toThrow(
-        NotFoundException,
-      );
+    it('should throw NotFoundException for unknown id', async () => {
+      mockService.findById.mockResolvedValue(null);
+
+      await expect(
+        controller.findOne('507f1f77bcf86cd799439011'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('join', () => {
-    it('should add a member and return the updated room', () => {
-      const created = service.create({ name: 'Test Room', ownerId: OWNER_ID });
+    it('should add a member and return the updated room', async () => {
+      const mockRoom = { participants: [OWNER_ID, USER_ID] };
+      mockService.addMember.mockResolvedValue(mockRoom);
 
-      const result = controller.join(created.code, { userId: USER_ID });
+      const result = await controller.join('ABC123', { userId: USER_ID });
 
-      expect(result.members).toContain(USER_ID);
+      expect(result).toEqual(mockRoom);
     });
 
-    it('should not add duplicate members', () => {
-      const created = service.create({ name: 'Test Room', ownerId: OWNER_ID });
+    it('should throw NotFoundException for unknown code', async () => {
+      mockService.addMember.mockResolvedValue(null);
 
-      controller.join(created.code, { userId: OWNER_ID });
-
-      expect(controller.findOne(created.id).members).toHaveLength(1);
-    });
-
-    it('should throw NotFoundException for unknown code', () => {
-      expect(() => controller.join('BADCOD', { userId: USER_ID })).toThrow(
-        NotFoundException,
-      );
+      await expect(
+        controller.join('BADCOD', { userId: USER_ID }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

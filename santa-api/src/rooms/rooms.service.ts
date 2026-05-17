@@ -1,49 +1,44 @@
 import { Injectable } from '@nestjs/common';
-
-export interface Room {
-  id: string;
-  name: string;
-  ownerId: string;
-  code: string;
-  members: string[];
-  createdAt: Date;
-}
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Room } from './schemas/room.schema';
+import { CreateRoomDto } from './dto/create-room.dto';
 
 @Injectable()
 export class RoomsService {
-  private rooms = new Map<string, Room>();
+  constructor(
+    @InjectModel(Room.name) private readonly roomModel: Model<Room>,
+  ) {}
 
-  create(dto: { name: string; ownerId: string }): Room {
-    const room: Room = {
-      id: crypto.randomUUID(),
+  create(dto: CreateRoomDto) {
+    const inviteCode = Math.random().toString(36).slice(2, 8).toUpperCase();
+    return this.roomModel.create({
       name: dto.name,
-      ownerId: dto.ownerId,
-      code: Math.random().toString(36).slice(2, 8).toUpperCase(),
-      members: [dto.ownerId],
-      createdAt: new Date(),
-    };
-    this.rooms.set(room.id, room);
-    return room;
+      creatorId: dto.ownerId,
+      inviteCode,
+      participants: [dto.ownerId],
+    });
   }
 
-  findAll(): Room[] {
-    return Array.from(this.rooms.values());
+  findAll() {
+    return this.roomModel.find().exec();
   }
 
-  findById(id: string): Room | undefined {
-    return this.rooms.get(id);
+  findById(id: string) {
+    return this.roomModel.findById(id).exec();
   }
 
-  findByCode(code: string): Room | undefined {
-    return Array.from(this.rooms.values()).find((r) => r.code === code);
+  findByCode(code: string) {
+    return this.roomModel.findOne({ inviteCode: code }).exec();
   }
 
-  addMember(code: string, userId: string): Room | undefined {
-    const room = this.findByCode(code);
-    if (!room) return undefined;
-    if (!room.members.includes(userId)) {
-      room.members.push(userId);
-    }
-    return room;
+  addMember(code: string, userId: string) {
+    return this.roomModel
+      .findOneAndUpdate(
+        { inviteCode: code },
+        { $addToSet: { participants: userId } },
+        { new: true },
+      )
+      .exec();
   }
 }
