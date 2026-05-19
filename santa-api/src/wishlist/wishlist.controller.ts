@@ -5,17 +5,25 @@ import {
   Param,
   Body,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { WishlistService } from './wishlist.service';
 import { UpdateWishlistDto } from './dto/update-wishlist.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('rooms/:roomId/wishlist')
+@UseGuards(JwtAuthGuard)
 export class WishlistController {
   constructor(private readonly wishlistService: WishlistService) {}
 
   @Post()
-  set(@Param('roomId') roomId: string, @Body() dto: UpdateWishlistDto) {
-    return this.wishlistService.set(roomId, dto.userId, dto.items);
+  set(
+    @Param('roomId') roomId: string,
+    @CurrentUser('id') userId: string,
+    @Body() dto: UpdateWishlistDto,
+  ) {
+    return this.wishlistService.set(roomId, userId, dto.items);
   }
 
   @Get(':userId')

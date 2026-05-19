@@ -9,17 +9,37 @@ export class UsersService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
 
-  create(dto: { name: string; email: string }) {
+  create(dto: {
+    email: string;
+    displayName: string;
+    passwordHash: string;
+    role?: 'user' | 'admin';
+  }) {
     return this.userModel.create({
       email: dto.email,
-      displayName: dto.name,
-      passwordHash: 'TODO_LESSON_08',
+      displayName: dto.displayName,
+      passwordHash: dto.passwordHash,
+      role: dto.role ?? 'user',
     });
+  }
+
+  findByEmail(email: string, opts: { withPassword?: boolean } = {}) {
+    const query = this.userModel.findOne({ email: email.toLowerCase() });
+    if (opts.withPassword) {
+      query.select('+passwordHash');
+    }
+    return query.exec();
   }
 
   async findById(id: string) {
     const user = await this.userModel.findById(id).exec();
     if (!user) throw new NotFoundException(`User ${id} not found`);
     return user;
+  }
+
+  updateById(id: string, dto: { displayName?: string }) {
+    return this.userModel
+      .findByIdAndUpdate(id, { $set: dto }, { new: true })
+      .exec();
   }
 }

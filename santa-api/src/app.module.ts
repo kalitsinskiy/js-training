@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { WishlistModule } from './wishlist/wishlist.module';
+import { AuthModule } from './auth/auth.module';
 import { LoggerModule } from 'nestjs-pino';
 import { MongooseModule } from '@nestjs/mongoose';
 
@@ -24,6 +25,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     UsersModule,
     RoomsModule,
     WishlistModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

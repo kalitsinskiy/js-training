@@ -6,19 +6,22 @@ import {
   Body,
   HttpCode,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
-import { JoinRoomDto } from './dto/join-room.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('rooms')
+@UseGuards(JwtAuthGuard)
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
   @Post()
   @HttpCode(201)
-  create(@Body() dto: CreateRoomDto) {
-    return this.roomsService.create(dto);
+  create(@Body() dto: CreateRoomDto, @CurrentUser('id') userId: string) {
+    return this.roomsService.create({ name: dto.name, ownerId: userId });
   }
 
   @Get()
@@ -36,8 +39,8 @@ export class RoomsController {
   }
 
   @Post(':code/join')
-  join(@Param('code') code: string, @Body() dto: JoinRoomDto) {
-    const room = this.roomsService.addMember(code, dto.userId);
+  join(@Param('code') code: string, @CurrentUser('id') userId: string) {
+    const room = this.roomsService.addMember(code, userId);
     if (!room) {
       throw new NotFoundException(`Room with code "${code}" not found`);
     }

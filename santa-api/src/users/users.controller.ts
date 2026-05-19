@@ -1,23 +1,34 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Param,
-  Body,
-  HttpCode,
   NotFoundException,
+  Param,
+  Patch,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+
+export class UpdateUserDto {
+  displayName?: string;
+}
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  @HttpCode(201)
-  create(@Body() dto: CreateUserDto) {
-    return this.usersService.create(dto);
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  getProfile(@CurrentUser('id') userId: string) {
+    return this.usersService.findById(userId);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  updateProfile(@CurrentUser('id') userId: string, @Body() dto: UpdateUserDto) {
+    return this.usersService.updateById(userId, dto);
   }
 
   @Get(':id')

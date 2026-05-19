@@ -4,7 +4,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  IsUUID,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -24,9 +23,6 @@ export class WishlistItemDto {
 }
 
 export class UpdateWishlistDto {
-  @IsUUID()
-  userId: string;
-
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => WishlistItemDto)
