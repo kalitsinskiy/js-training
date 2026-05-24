@@ -6,10 +6,9 @@ import {
   HttpStatus,
   NotFoundException,
   Param,
-  ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
-import { UpdateWishlistDto } from './dto/update-wishlist,dto';
+import { UpdateWishlistDto } from './dto/update-wishlist.dto';
 import { WishlistService, type Wishlist } from './wishlist.service';
 
 @Controller('rooms/:roomId/wishlist')
@@ -18,19 +17,19 @@ export class WishlistController {
 
   @Post()
   @HttpCode(HttpStatus.OK)
-  upsert(
-    @Param('roomId', ParseUUIDPipe) roomId: string,
+  async upsert(
+    @Param('roomId') roomId: string,
     @Body() dto: UpdateWishlistDto,
-  ): Wishlist {
+  ): Promise<Wishlist> {
     return this.wishlistService.set(roomId, dto.userId, dto.items);
   }
 
   @Get(':userId')
-  findOne(
-    @Param('roomId', ParseUUIDPipe) roomId: string,
-    @Param('userId', ParseUUIDPipe) userId: string,
-  ): Wishlist {
-    const wishlist = this.wishlistService.get(roomId, userId);
+  async findOne(
+    @Param('roomId') roomId: string,
+    @Param('userId') userId: string,
+  ): Promise<Wishlist> {
+    const wishlist = await this.wishlistService.get(roomId, userId);
 
     if (!wishlist) {
       throw new NotFoundException(

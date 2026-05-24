@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { User as UserSchemaClass, UserDocument } from './schemas/users.shcema';
 
 export interface User {
   id: string;
@@ -15,21 +17,34 @@ export interface CreateUserInput {
 
 @Injectable()
 export class UsersService {
-  private readonly users = new Map<string, User>();
+  constructor(
+    @InjectModel(UserSchemaClass.name)
+    private readonly userModel: Model<UserDocument>,
+  ) {}
 
-  create(input: CreateUserInput) {
-    const user: User = {
-      id: randomUUID(),
-      name: input.name,
+  async create(input: CreateUserInput): Promise<User> {
+    const doc = await this.userModel.create({
       email: input.email,
-      createdAt: new Date(),
-    };
+      displayName: input.name,
+      passwordHash: 'TODO_LESSON_08',
+    });
 
-    this.users.set(user.id, user);
-    return user;
+    return this.toPublic(doc);
   }
 
-  findById(id: string): User | undefined {
-    return this.users.get(id);
+  async findById(id: string): Promise<User | undefined> {
+    if (!Types.ObjectId.isValid(id)) return undefined;
+
+    const doc = await this.userModel.findById(id);
+    return doc ? this.toPublic(doc) : undefined;
+  }
+
+  private toPublic(doc: UserDocument): User {
+    return {
+      id: doc._id.toString(),
+      name: doc.displayName,
+      email: doc.email,
+      createdAt: doc.get('createdAt'),
+    };
   }
 }

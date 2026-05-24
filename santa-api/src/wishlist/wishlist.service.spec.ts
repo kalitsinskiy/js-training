@@ -1,16 +1,48 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { MongooseModule, getModelToken } from '@nestjs/mongoose';
+import mongoose, { Model } from 'mongoose';
 import { WishlistService } from './wishlist.service';
-import { randomUUID } from 'node:crypto';
+import {
+  Wishlist as WishlistSchemaClass,
+  WishlistSchema,
+  WishlistDocument,
+} from './schemas/wishlist.schema';
+import {
+  startInMemoryMongo,
+  stopInMemoryMongo,
+} from '../../test/helpers/mongo';
 
 describe('WishlistService', () => {
   let service: WishlistService;
+  let wishlistModel: Model<WishlistDocument>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
+    const uri = await startInMemoryMongo();
+
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        MongooseModule.forRoot(uri),
+        MongooseModule.forFeature([
+          { name: WishlistSchemaClass.name, schema: WishlistSchema },
+        ]),
+      ],
       providers: [WishlistService],
     }).compile();
 
     service = module.get<WishlistService>(WishlistService);
+    wishlistModel = module.get<Model<WishlistDocument>>(
+      getModelToken(WishlistSchemaClass.name),
+    );
+    await wishlistModel.ensureIndexes();
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await stopInMemoryMongo();
+  });
+
+  beforeEach(async () => {
+    await wishlistModel.deleteMany({});
   });
 
   test('should be defined', () => {
@@ -18,80 +50,106 @@ describe('WishlistService', () => {
   });
 
   describe('set', () => {
-    test('stores the wishlist and returns { roomId, userId, items }', () => {
-      const roomId = randomUUID();
-      const userId = randomUUID();
+    test('stores the wishlist and returns { roomId, userId, items }', async () => {
+      const roomId = new mongoose.Types.ObjectId().toString();
+      const userId = new mongoose.Types.ObjectId().toString();
 
-      const result = service.set(roomId, userId, ['repair tools', 'cup']);
+      const result = await service.set(roomId, userId, [
+        { name: 'repair tools' },
+        { name: 'cup' },
+      ]);
 
       expect(result).toEqual({
         roomId,
         userId,
-        items: ['repair tools', 'cup'],
+        items: [{ name: 'repair tools' }, { name: 'cup' }],
       });
     });
 
-    test('overwrites a previous wishlist for the same (roomId, userId)', () => {
-      const roomId = randomUUID();
-      const userId = randomUUID();
+    test('overwrites a previous wishlist for the same (roomId, userId)', async () => {
+      const roomId = new mongoose.Types.ObjectId().toString();
+      const userId = new mongoose.Types.ObjectId().toString();
 
-      service.set(roomId, userId, ['old']);
-      const result = service.set(roomId, userId, ['new']);
+      await service.set(roomId, userId, [{ name: 'old' }]);
+      const result = await service.set(roomId, userId, [{ name: 'new' }]);
 
-      expect(result.items).toEqual(['new']);
-      expect(service.get(roomId, userId)?.items).toEqual(['new']);
+      expect(result.items).toEqual([{ name: 'new' }]);
+      expect((await service.get(roomId, userId))?.items).toEqual([
+        { name: 'new' },
+      ]);
     });
 
-    test('isolates wishlists per (roomId, userId) — same user, different rooms', () => {
-      const userId = randomUUID();
-      const roomA = randomUUID();
-      const roomB = randomUUID();
+    test('only one document persists per (roomId, userId) — upsert + compound unique index', async () => {
+      const roomId = new mongoose.Types.ObjectId().toString();
+      const userId = new mongoose.Types.ObjectId().toString();
 
-      service.set(roomA, userId, ['a']);
-      service.set(roomB, userId, ['b']);
+      await service.set(roomId, userId, [{ name: 'book' }]);
+      await service.set(roomId, userId, [{ name: 'socks', priority: 1 }]);
 
-      expect(service.get(roomA, userId)?.items).toEqual(['a']);
-      expect(service.get(roomB, userId)?.items).toEqual(['b']);
+      const count = await wishlistModel.countDocuments({ userId, roomId });
+      expect(count).toBe(1);
     });
 
-    test('isolates wishlists per (roomId, userId) — same room, different users', () => {
-      const roomId = randomUUID();
-      const userA = randomUUID();
-      const userB = randomUUID();
+    test('isolates wishlists per (roomId, userId) — same user, different rooms', async () => {
+      const userId = new mongoose.Types.ObjectId().toString();
+      const roomA = new mongoose.Types.ObjectId().toString();
+      const roomB = new mongoose.Types.ObjectId().toString();
 
-      service.set(roomId, userA, ['a']);
-      service.set(roomId, userB, ['b']);
+      await service.set(roomA, userId, [{ name: 'a' }]);
+      await service.set(roomB, userId, [{ name: 'b' }]);
 
-      expect(service.get(roomId, userA)?.items).toEqual(['a']);
-      expect(service.get(roomId, userB)?.items).toEqual(['b']);
+      expect((await service.get(roomA, userId))?.items).toEqual([
+        { name: 'a' },
+      ]);
+      expect((await service.get(roomB, userId))?.items).toEqual([
+        { name: 'b' },
+      ]);
+    });
+
+    test('isolates wishlists per (roomId, userId) — same room, different users', async () => {
+      const roomId = new mongoose.Types.ObjectId().toString();
+      const userA = new mongoose.Types.ObjectId().toString();
+      const userB = new mongoose.Types.ObjectId().toString();
+
+      await service.set(roomId, userA, [{ name: 'a' }]);
+      await service.set(roomId, userB, [{ name: 'b' }]);
+
+      expect((await service.get(roomId, userA))?.items).toEqual([
+        { name: 'a' },
+      ]);
+      expect((await service.get(roomId, userB))?.items).toEqual([
+        { name: 'b' },
+      ]);
     });
   });
 
   describe('get', () => {
-    test('returns the stored wishlist when one exists', () => {
-      const roomId = randomUUID();
-      const userId = randomUUID();
-      service.set(roomId, userId, ['cup']);
+    test('returns the stored wishlist when one exists', async () => {
+      const roomId = new mongoose.Types.ObjectId().toString();
+      const userId = new mongoose.Types.ObjectId().toString();
+      await service.set(roomId, userId, [{ name: 'cup' }]);
 
-      expect(service.get(roomId, userId)).toEqual({
+      expect(await service.get(roomId, userId)).toEqual({
         roomId,
         userId,
-        items: ['cup'],
+        items: [{ name: 'cup' }],
       });
     });
-  });
 
-  test('returns undefined when no wishlist exists for that pair', () => {
-    expect(service.get(randomUUID(), randomUUID())).toBeUndefined();
-  });
+    test('returns undefined when no wishlist exists for that pair', async () => {
+      const roomId = new mongoose.Types.ObjectId().toString();
+      const userId = new mongoose.Types.ObjectId().toString();
+      expect(await service.get(roomId, userId)).toBeUndefined();
+    });
 
-  test("does not return another user's wishlist for the same room", () => {
-    const roomId = randomUUID();
-    const userA = randomUUID();
-    const userB = randomUUID();
+    test("does not return another user's wishlist for the same room", async () => {
+      const roomId = new mongoose.Types.ObjectId().toString();
+      const userA = new mongoose.Types.ObjectId().toString();
+      const userB = new mongoose.Types.ObjectId().toString();
 
-    service.set(roomId, userA, ['a']);
+      await service.set(roomId, userA, [{ name: 'a' }]);
 
-    expect(service.get(roomId, userB)).toBeUndefined();
+      expect(await service.get(roomId, userB)).toBeUndefined();
+    });
   });
 });

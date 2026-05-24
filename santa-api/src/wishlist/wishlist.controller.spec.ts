@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { WishlistController } from './wishlist.controller';
 import { WishlistService, type Wishlist } from './wishlist.service';
+import { rejects } from 'node:assert';
 
 describe('WishlistController', () => {
   let controller: WishlistController;
@@ -31,48 +32,48 @@ describe('WishlistController', () => {
   });
 
   describe('POST /rooms/:roomId/wishlist', () => {
-    test('delegates to service.set with roomId from the path and returns the wishlist', () => {
+    test('delegates to service.set with roomId from the path and returns the wishlist', async () => {
       const roomId = randomUUID();
       const userId = randomUUID();
       const wishlist: Wishlist = {
         roomId,
         userId,
-        items: ['car accessories', 'cup'],
+        items: [{ name: 'car accessories' }, { name: 'cup' }],
       };
-      service.set.mockReturnValue(wishlist);
+      service.set.mockResolvedValue(wishlist);
 
-      const result = controller.upsert(roomId, {
+      const result = await controller.upsert(roomId, {
         userId,
-        items: ['car accessories', 'cup'],
+        items: [{ name: 'car accessories' }, { name: 'cup' }],
       });
 
       expect(service.set).toHaveBeenCalledWith(roomId, userId, [
-        'car accessories',
-        'cup',
+        { name: 'car accessories' },
+        { name: 'cup' },
       ]);
       expect(result).toBe(wishlist);
     });
   });
 
   describe('GET /rooms/:roomId/wishlist/:userId', () => {
-    test('returns the wishlist when one exists', () => {
+    test('returns the wishlist when one exists', async () => {
       const roomId = randomUUID();
       const userId = randomUUID();
-      const wishlist: Wishlist = { roomId, userId, items: ['cup'] };
-      service.get.mockReturnValue(wishlist);
+      const wishlist: Wishlist = { roomId, userId, items: [{ name: 'cup' }] };
+      service.get.mockResolvedValue(wishlist);
 
-      const result = controller.findOne(roomId, userId);
+      const result = await controller.findOne(roomId, userId);
 
       expect(service.get).toHaveBeenCalledWith(roomId, userId);
       expect(result).toBe(wishlist);
     });
 
-    test('throws NotFoundException when no wishlist exists', () => {
-      service.get.mockReturnValue(undefined);
+    test('throws NotFoundException when no wishlist exists', async () => {
+      service.get.mockResolvedValue(undefined);
 
-      expect(() => controller.findOne(randomUUID(), randomUUID())).toThrow(
-        NotFoundException,
-      );
+      await expect(() =>
+        controller.findOne(randomUUID(), randomUUID()),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

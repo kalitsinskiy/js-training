@@ -1,19 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
 import { NotFoundError } from '../src/errors';
-
-interface Notificaiton {
-  id: number;
-  userId: string;
-  type: string;
-  message: string;
-  read: boolean;
-  createdAt: string;
-}
+import { NotificationModel } from '../src/models/notification';
 
 const notificationRoutes: FastifyPluginAsync = async (fastify) => {
-  const notifications: Notificaiton[] = [];
-  let nextId = 1;
-
   fastify.get<{ Querystring: { userId?: string } }>(
     '/',
     {
@@ -23,7 +12,7 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             userId: {
               type: 'string',
-              format: 'uuid',
+              pattern: '^[a-fA-F0-9]{24}$',
             },
           },
           additionalProperties: false,
@@ -31,11 +20,8 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (request) => {
-      const { userId } = request.query;
-
-      if (!userId) return notifications;
-
-      return notifications.filter((n) => n.userId === userId);
+      const filter = request.query.userId ? { userId: request.query.userId } : {};
+      return NotificationModel.find(filter).sort({ createdAt: -1 }).lean();
     }
   );
 
@@ -46,24 +32,25 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
         params: {
           type: 'object',
           properties: {
-            id: { type: 'string', pattern: '^\\d+$' },
+            id: { type: 'string', pattern: '^[a-fA-F0-9]{24}$' },
           },
         },
       },
     },
-    async (request, reply) => {
-      const id = parseInt(request.params.id, 10);
-      const found = notifications.find((n) => n.id === id);
-
-      if (!found) {
-        throw new NotFoundError('Notification', id);
-      }
-
+    async (request) => {
+      const found = await NotificationModel.findById(request.params.id).lean();
+      if (!found) throw new NotFoundError('Notification', request.params.id);
       return found;
     }
   );
 
-  fastify.post<{ Body: { userId: string; type: string; message: string } }>(
+  fastify.post<{
+    Body: {
+      userId: string;
+      type: 'room_invite' | 'assignment' | 'wishlist_update' | 'system';
+      message: string;
+    };
+  }>(
     '/',
     {
       schema: {
@@ -71,7 +58,7 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
           type: 'object',
           required: ['userId', 'type', 'message'],
           properties: {
-            userId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string', pattern: '^[a-fA-F0-9]{24}$' },
             type: {
               type: 'string',
               enum: ['room_invite', 'assignment', 'wishlist_update', 'system'],
@@ -83,19 +70,9 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (request, reply) => {
-      const { userId, type, message } = request.body;
-      const created: Notificaiton = {
-        id: nextId++,
-        userId,
-        type,
-        message,
-        read: false,
-        createdAt: new Date().toISOString(),
-      };
-
-      notifications.push(created);
+      const created = await NotificationModel.create(request.body);
       reply.status(201);
-      return created;
+      return created.toObject();
     }
   );
 
@@ -106,21 +83,19 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
         params: {
           type: 'object',
           properties: {
-            id: { type: 'string', pattern: '^\\d+$' },
+            id: { type: 'string', pattern: '^[a-fA-F0-9]{24}$' },
           },
         },
       },
     },
-    async (request, reply) => {
-      const id = parseInt(request.params.id, 10);
-      const found = notifications.find((n) => n.id === id);
-
-      if (!found) {
-        throw new NotFoundError('Notification', id);
-      }
-
-      found.read = true;
-      return found;
+    async (request) => {
+      const updated = await NotificationModel.findByIdAndUpdate(
+        request.params.id,
+        { read: true },
+        { new: true }
+      ).lean();
+      if (!updated) throw new NotFoundError('Notification', request.params.id);
+      return updated;
     }
   );
 
@@ -131,20 +106,14 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
         params: {
           type: 'object',
           properties: {
-            id: { type: 'string', pattern: '^\\d+$' },
+            id: { type: 'string', pattern: '^[a-fA-F0-9]{24}$' },
           },
         },
       },
     },
     async (request, reply) => {
-      const id = parseInt(request.params.id, 10);
-      const index = notifications.findIndex((n) => n.id === id);
-
-      if (index === -1) {
-        throw new NotFoundError('Notification', id);
-      }
-
-      notifications.splice(index, 1);
+      const deleted = await NotificationModel.findByIdAndDelete(request.params.id);
+      if (!deleted) throw new NotFoundError('Notification', request.params.id);
       return reply.status(204).send();
     }
   );

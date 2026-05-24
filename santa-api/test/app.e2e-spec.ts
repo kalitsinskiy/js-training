@@ -5,11 +5,17 @@ import {
 } from '@nestjs/platform-fastify';
 import { AppModule } from '../src/app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { startInMemoryMongo, stopInMemoryMongo } from './helpers/mongo';
+import { Connection } from 'mongoose';
+import { getConnectionToken } from '@nestjs/mongoose';
 
 describe('AppController (e2e)', () => {
   let app: NestFastifyApplication;
+  let connection: Connection;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
+    await startInMemoryMongo();
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -28,10 +34,17 @@ describe('AppController (e2e)', () => {
 
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
+
+    connection = app.get<Connection>(getConnectionToken());
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await app.close();
+    await stopInMemoryMongo();
+  });
+
+  beforeEach(async () => {
+    await connection.dropDatabase();
   });
 
   describe('GET /health', () => {

@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { Room as RoomSchemaClass, RoomDocument } from './schemas/room.schema';
 
 export interface Room {
   id: string;
@@ -17,53 +19,64 @@ export interface CreateRoomInput {
 
 @Injectable()
 export class RoomsService {
-  private readonly rooms = new Map<string, Room>();
+  constructor(
+    @InjectModel(RoomSchemaClass.name)
+    private readonly roomModel: Model<RoomDocument>,
+  ) {}
 
-  create(input: CreateRoomInput): Room {
-    const room: Room = {
-      id: randomUUID(),
+  async create(input: CreateRoomInput): Promise<Room> {
+    const inviteCode = await this.generateUniqueCode();
+    const doc = await this.roomModel.create({
       name: input.name,
-      ownerId: input.ownerId,
-      code: this.generateUniqueCode(),
-      members: [input.ownerId],
-      createdAt: new Date(),
-    };
-    this.rooms.set(room.id, room);
-
-    return room;
+      creatorId: input.ownerId,
+      inviteCode,
+      participants: [input.ownerId],
+    });
+    return this.toPublic(doc);
   }
 
-  findAll(): Room[] {
-    return Array.from(this.rooms.values());
+  async findAll(): Promise<Room[]> {
+    const docs = await this.roomModel.find();
+    return docs.map((doc) => this.toPublic(doc));
   }
 
-  findById(id: string): Room | undefined {
-    return this.rooms.get(id);
+  async findById(id: string): Promise<Room | undefined> {
+    if (!Types.ObjectId.isValid(id)) return undefined;
+    const doc = await this.roomModel.findById(id);
+    return doc ? this.toPublic(doc) : undefined;
   }
 
-  findByCode(code: string): Room | undefined {
-    for (const room of this.rooms.values()) {
-      if (room.code === code) return room;
-    }
-
-    return undefined;
+  async findByCode(code: string): Promise<Room | undefined> {
+    const doc = await this.roomModel.findOne({ inviteCode: code });
+    return doc ? this.toPublic(doc) : undefined;
   }
 
-  addMember(code: string, userId: string): Room | undefined {
-    const room = this.findByCode(code);
-
-    if (!room) return undefined;
-    if (!room.members.includes(userId)) {
-      room.members.push(userId);
-    }
-
-    return room;
+  async addMember(code: string, userId: string): Promise<Room | undefined> {
+    const doc = await this.roomModel.findOneAndUpdate(
+      { inviteCode: code },
+      { $addToSet: { participants: userId } },
+      { new: true },
+    );
+    return doc ? this.toPublic(doc) : undefined;
   }
 
-  private generateUniqueCode(): string {
+  private async generateUniqueCode(): Promise<string> {
     while (true) {
       const code = Math.random().toString(36).slice(2, 8).toUpperCase();
-      if (code.length === 6 && !this.findByCode(code)) return code;
+      if (code.length !== 6) continue;
+      const exists = await this.roomModel.exists({ inviteCode: code });
+      if (!exists) return code;
     }
+  }
+
+  private toPublic(doc: RoomDocument): Room {
+    return {
+      id: doc._id.toString(),
+      name: doc.name,
+      ownerId: doc.creatorId,
+      code: doc.inviteCode,
+      members: doc.participants,
+      createdAt: doc.get('createdAt'),
+    };
   }
 }

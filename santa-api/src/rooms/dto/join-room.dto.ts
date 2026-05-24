@@ -1,6 +1,6 @@
-import { IsUUID } from 'class-validator';
+import { IsMongoId } from 'class-validator';
 
 export class JoinRoomDto {
-  @IsUUID()
+  @IsMongoId()
   userId!: string;
 }

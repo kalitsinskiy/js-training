@@ -3,14 +3,19 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
+import { Connection, Types } from 'mongoose';
+import { getConnectionToken } from '@nestjs/mongoose';
 import { AppModule } from '../src/app.module';
-import { randomUUID } from 'node:crypto';
 import { ValidationPipe } from '@nestjs/common';
+import { startInMemoryMongo, stopInMemoryMongo } from './helpers/mongo';
 
 describe('RoomsController (e2e)', () => {
   let app: NestFastifyApplication;
+  let connection: Connection;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
+    await startInMemoryMongo();
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -29,10 +34,17 @@ describe('RoomsController (e2e)', () => {
 
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
+
+    connection = app.get<Connection>(getConnectionToken());
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await app.close();
+    await stopInMemoryMongo();
+  });
+
+  beforeEach(async () => {
+    await connection.dropDatabase();
   });
 
   const post = (url: string, payload: unknown) =>
@@ -43,7 +55,7 @@ describe('RoomsController (e2e)', () => {
 
   describe('POST /rooms', () => {
     test('creates a room and returns 201 with the full shape', async () => {
-      const ownerId = randomUUID();
+      const ownerId = new Types.ObjectId().toString();
 
       const res = await post('/rooms', {
         name: 'Test Room',
@@ -64,11 +76,11 @@ describe('RoomsController (e2e)', () => {
 
   describe('POST /rooms - validation', () => {
     test('returns 400 when name is too short', async () => {
-      const res = await post('/rooms', { name: 'AB', ownerId: randomUUID() });
+      const res = await post('/rooms', { name: 'AB', ownerId: new Types.ObjectId().toString() });
       expect(res.statusCode).toBe(400);
     });
 
-    test('returns 400 when ownerId is not UUID', async () => {
+    test('returns 400 when ownerId is not a Mongo ObjectId', async () => {
       const res = await post('/rooms', {
         name: 'Test Party',
         ownerId: 'owner-id',
@@ -79,7 +91,7 @@ describe('RoomsController (e2e)', () => {
     test('returns 400 when unkknown field is set', async () => {
       const res = await post('/rooms', {
         name: 'Test Party',
-        ownerId: randomUUID(),
+        ownerId: new Types.ObjectId().toString(),
         isAdminRoom: true,
       });
       expect(res.statusCode).toBe(400);
@@ -87,9 +99,6 @@ describe('RoomsController (e2e)', () => {
   });
 
   describe('GET /rooms', () => {
-    const ownerId1 = randomUUID();
-    const ownerId2 = randomUUID();
-
     test('returns 200 with an empty array when no rooms exist', async () => {
       const res = await get('/rooms');
 
@@ -98,8 +107,8 @@ describe('RoomsController (e2e)', () => {
     });
 
     test('returns every created room', async () => {
-      const ownerId1 = randomUUID();
-      const ownerId2 = randomUUID();
+      const ownerId1 = new Types.ObjectId().toString();
+      const ownerId2 = new Types.ObjectId().toString();
 
       await post('/rooms', { name: 'Room A', ownerId: ownerId1 });
       await post('/rooms', { name: 'Room B', ownerId: ownerId2 });
@@ -112,7 +121,7 @@ describe('RoomsController (e2e)', () => {
   });
 
   describe('GET /rooms/:id', () => {
-    const ownerId = randomUUID();
+    const ownerId = new Types.ObjectId().toString();
 
     test('returns 200 with the room when it exists', async () => {
       const created = (
@@ -130,15 +139,15 @@ describe('RoomsController (e2e)', () => {
     });
 
     test('returns 404 when the room does not exist', async () => {
-      const res = await get(`/rooms/${randomUUID()}`);
+      const res = await get(`/rooms/${new Types.ObjectId().toString()}`);
       expect(res.statusCode).toBe(404);
     });
   });
 
   describe('POST /rooms/:code/join', () => {
     test('returns 200 (not 201) and adds the member', async () => {
-      const ownerId = randomUUID();
-      const userId = randomUUID();
+      const ownerId = new Types.ObjectId().toString();
+      const userId = new Types.ObjectId().toString();
       const created = (
         await post('/rooms', { name: 'Room A', ownerId })
       ).json();
@@ -150,8 +159,8 @@ describe('RoomsController (e2e)', () => {
     });
 
     test('is idempotent — joining twice does not duplicate', async () => {
-      const ownerId = randomUUID();
-      const userId = randomUUID();
+      const ownerId = new Types.ObjectId().toString();
+      const userId = new Types.ObjectId().toString();
       const created = (
         await post('/rooms', { name: 'Room A', ownerId })
       ).json();
@@ -164,7 +173,7 @@ describe('RoomsController (e2e)', () => {
     });
 
     test('returns 404 with the error envelope when no room has that code', async () => {
-      const userId = randomUUID();
+      const userId = new Types.ObjectId().toString();
       const res = await post('/rooms/ZZZZZZ/join', { userId });
       expect(res.statusCode).toBe(404);
       expect(res.json()).toEqual({
@@ -176,15 +185,15 @@ describe('RoomsController (e2e)', () => {
     });
   });
 
-  test('returns 400 when userId is not UUID', async () => {
+  test('returns 400 when userId is not a Mongo ObjectId', async () => {
     const createRes = await post('/rooms', {
       name: 'Valid Name',
-      ownerId: randomUUID(),
+      ownerId: new Types.ObjectId().toString(),
     });
     const created = createRes.json();
 
     const res = await post(`/rooms/${created.code}/join`, {
-      userId: 'not-a-uuid',
+      userId: 'not-a-mongo-id',
     });
 
     expect(res.statusCode).toBe(400);

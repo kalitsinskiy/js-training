@@ -42,11 +42,11 @@ describe('RoomsController', () => {
   });
 
   describe('POST /rooms', () => {
-    test('delegates to service.create and return the created room', () => {
+    test('delegates to service.create and return the created room', async () => {
       const room = buildRoom();
-      service.create.mockReturnValue(room);
+      service.create.mockResolvedValue(room);
 
-      const result = controller.create({
+      const result = await controller.create({
         name: 'Testing Room',
         ownerId: 'owner-1',
       });
@@ -60,51 +60,53 @@ describe('RoomsController', () => {
   });
 
   describe('GET /rooms', () => {
-    test('returns all rooms', () => {
+    test('returns all rooms', async () => {
       const rooms = [
         buildRoom({ id: 'a' }),
         buildRoom({ id: 'b', code: 'XYZ789' }),
       ];
-      service.findAll.mockReturnValue(rooms);
+      service.findAll.mockResolvedValue(rooms);
 
-      expect(controller.findAll()).toBe(rooms);
+      expect(await controller.findAll()).toBe(rooms);
       expect(service.findAll).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('GET /rooms/:id', () => {
-    test('returns the room when it exists', () => {
+    test('returns the room when it exists', async () => {
       const room = buildRoom();
-      service.findById.mockReturnValue(room);
+      service.findById.mockResolvedValue(room);
 
-      expect(controller.findOne('room-1')).toBe(room);
+      expect(await controller.findOne('room-1')).toBe(room);
       expect(service.findById).toHaveBeenCalledWith('room-1');
     });
 
-    test('throws NotFoundException when the room does not exist', () => {
-      service.findById.mockReturnValue(undefined);
+    test('throws NotFoundException when the room does not exist', async () => {
+      service.findById.mockResolvedValue(undefined);
 
-      expect(() => controller.findOne('missing')).toThrow(NotFoundException);
+      await expect(controller.findOne('missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('POST /rooms/:code/join', () => {
-    test('delegates to service.addMember and returns the updated room', () => {
+    test('delegates to service.addMember and returns the updated room', async () => {
       const updated = buildRoom({ members: ['owner-1', 'user-2'] });
-      service.addMember.mockReturnValue(updated);
+      service.addMember.mockResolvedValue(updated);
 
-      const result = controller.join('ABC123', { userId: 'user-2' });
+      const result = await controller.join('ABC123', { userId: 'user-2' });
 
       expect(service.addMember).toHaveBeenCalledWith('ABC123', 'user-2');
       expect(result).toBe(updated);
     });
 
-    test('throws NotFoundException when no room has that code', () => {
-      service.addMember.mockReturnValue(undefined);
+    test('throws NotFoundException when no room has that code', async () => {
+      service.addMember.mockResolvedValue(undefined);
 
-      expect(() => controller.join('ZZZZZZ', { userId: 'user-2' })).toThrow(
-        NotFoundException,
-      );
+      await expect(
+        controller.join('ZZZZZZ', { userId: 'user-2' }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

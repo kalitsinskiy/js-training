@@ -1,10 +1,21 @@
 import { buildApp } from '../app';
 import { FastifyInstance } from 'fastify';
+import mongoose from 'mongoose';
+import { setupTestDb, teardownTestDb, clearTestDb } from './helpers/db';
 
 describe('buildApp', () => {
   let app: FastifyInstance;
 
+  beforeAll(async () => {
+    await setupTestDb();
+  });
+
+  afterAll(async () => {
+    await teardownTestDb();
+  });
+
   beforeEach(async () => {
+    await clearTestDb();
     app = await buildApp();
     await app.ready();
   });
@@ -82,7 +93,8 @@ describe('buildApp', () => {
     });
 
     test('NotFoundError returns 404 with NOT_FOUND code', async () => {
-      const res = await app.inject({ method: 'GET', url: '/api/notifications/9999' });
+      const fakeId = new mongoose.Types.ObjectId().toString();
+      const res = await app.inject({ method: 'GET', url: `/api/notifications/${fakeId}` });
 
       expect(res.statusCode).toBe(404);
 

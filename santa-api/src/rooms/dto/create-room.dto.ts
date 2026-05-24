@@ -1,10 +1,10 @@
-import { IsString, IsUUID, MinLength } from 'class-validator';
+import { IsMongoId, IsString, MinLength } from 'class-validator';
 
 export class CreateRoomDto {
   @IsString()
   @MinLength(3)
   name!: string;
 
-  @IsUUID()
+  @IsMongoId()
   ownerId!: string;
 }

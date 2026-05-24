@@ -14,13 +14,13 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  create(@Body() input: CreateUserDto): User {
+  async create(@Body() input: CreateUserDto): Promise<User> {
     return this.usersService.create(input);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): User {
-    const user = this.usersService.findById(id);
+  async findOne(@Param('id') id: string): Promise<User> {
+    const user = await this.usersService.findById(id);
 
     if (!user) {
       throw new NotFoundException(`User ${id} not found`);

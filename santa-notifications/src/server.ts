@@ -1,6 +1,8 @@
+import { connectDb } from './db';
 import { buildApp } from './app';
 
 async function start() {
+  await connectDb();
   const app = await buildApp();
 
   try {

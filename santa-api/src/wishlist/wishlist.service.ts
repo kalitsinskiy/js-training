@@ -1,29 +1,53 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import {
+  Wishlist as WishlistSchemaClass,
+  WishlistDocument,
+  WishlistItem,
+} from './schemas/wishlist.schema';
 
 export interface Wishlist {
   roomId: string;
   userId: string;
-  items: string[];
+  items: WishlistItem[];
 }
 
 @Injectable()
 export class WishlistService {
-  private readonly wishlists = new Map<string, string[]>();
+  constructor(
+    @InjectModel(WishlistSchemaClass.name)
+    private readonly wishlistModel: Model<WishlistDocument>,
+  ) {}
 
-  set(roomId: string, userId: string, items: string[]): Wishlist {
-    this.wishlists.set(this.key(roomId, userId), items);
-    return { roomId, userId, items };
+  async set(
+    roomId: string,
+    userId: string,
+    items: WishlistItem[],
+  ): Promise<Wishlist> {
+    const doc = await this.wishlistModel.findOneAndUpdate(
+      { userId, roomId },
+      { $set: { items } },
+      { upsert: true, new: true, runValidators: true },
+    );
+    return this.toPublic(doc);
   }
 
-  get(roomId: string, userId: string): Wishlist | undefined {
-    const items = this.wishlists.get(this.key(roomId, userId));
-
-    if (!items) return undefined;
-
-    return { roomId, userId, items };
+  async get(roomId: string, userId: string): Promise<Wishlist | undefined> {
+    const doc = await this.wishlistModel.findOne({ userId, roomId });
+    return doc ? this.toPublic(doc) : undefined;
   }
 
-  private key(roomId: string, userId: string): string {
-    return `${roomId}:${userId}`;
+  private toPublic(doc: WishlistDocument): Wishlist {
+    return {
+      roomId: doc.roomId,
+      userId: doc.userId,
+      items: doc.items.map((item) => {
+        const out: WishlistItem = { name: item.name };
+        if (item.url !== undefined) out.url = item.url;
+        if (item.priority !== undefined) out.priority = item.priority;
+        return out;
+      }),
+    };
   }
 }

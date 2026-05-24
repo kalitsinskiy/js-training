@@ -1,10 +1,22 @@
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../app';
+import { clearTestDb, setupTestDb, teardownTestDb } from './helpers/db';
+import mongoose from 'mongoose';
 
 describe('notifications routes', () => {
   let app: FastifyInstance;
 
+  beforeAll(async () => {
+    await setupTestDb();
+  });
+
+  afterAll(async () => {
+    await teardownTestDb();
+  });
+
   beforeEach(async () => {
+    await clearTestDb();
+
     app = await buildApp();
     await app.ready();
   });
@@ -16,7 +28,7 @@ describe('notifications routes', () => {
   describe('POST /api/notifications', () => {
     test('creates a notification and returns 201', async () => {
       const payload = {
-        userId: 'a0000000-0000-0000-0000-000000000001',
+        userId: '000000000000000000000001',
         type: 'room_invite',
         message: 'Your room is ready',
       };
@@ -26,7 +38,7 @@ describe('notifications routes', () => {
 
       const body = res.json();
       expect(body).toMatchObject(payload);
-      expect(body).toHaveProperty('id');
+      expect(body).toHaveProperty('_id');
       expect(body).toHaveProperty('createdAt');
       expect(body.read).toBe(false);
     });
@@ -35,17 +47,17 @@ describe('notifications routes', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/notifications',
-        payload: { userId: 'a0000000-0000-0000-0000-000000000001' },
+        payload: { userId: '000000000000000000000001' },
       });
 
       expect(res.statusCode).toBe(400);
     });
 
-    test('returns 400 when userId is not a UUID', async () => {
+    test('returns 400 when userId is not a Mongo ObjectId', async () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/notifications',
-        payload: { userId: 'not-a-uuid', type: 'system', message: 'hi' },
+        payload: { userId: 'not-a-mongo-id', type: 'system', message: 'hi' },
       });
 
       expect(res.statusCode).toBe(400);
@@ -61,7 +73,7 @@ describe('notifications routes', () => {
         method: 'POST',
         url: '/api/notifications',
         payload: {
-          userId: 'a0000000-0000-0000-0000-000000000001',
+          userId: '000000000000000000000001',
           type: 'system',
           message: '',
         },
@@ -75,7 +87,7 @@ describe('notifications routes', () => {
         method: 'POST',
         url: '/api/notifications',
         payload: {
-          userId: 'a0000000-0000-0000-0000-000000000001',
+          userId: '000000000000000000000001',
           type: 'system',
           message: 'm',
           extra: 'hello',
@@ -100,7 +112,7 @@ describe('notifications routes', () => {
       method: 'POST',
       url: '/api/notifications',
       payload: {
-        userId: 'a0000000-0000-0000-0000-000000000001',
+        userId: '000000000000000000000001',
         type: 'room_invite',
         message: 'm',
       },
@@ -109,7 +121,7 @@ describe('notifications routes', () => {
       method: 'POST',
       url: '/api/notifications',
       payload: {
-        userId: 'a0000000-0000-0000-0000-000000000002',
+        userId: '000000000000000000000002',
         type: 'room_invite',
         message: 'm',
       },
@@ -118,12 +130,12 @@ describe('notifications routes', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/notifications',
-      query: { userId: 'a0000000-0000-0000-0000-000000000001' },
+      query: { userId: '000000000000000000000001' },
     });
 
     const list = res.json();
     expect(list).toHaveLength(1);
-    expect(list[0].userId).toBe('a0000000-0000-0000-0000-000000000001');
+    expect(list[0].userId).toBe('000000000000000000000001');
   });
 
   describe('GET /api/notifications/:id', () => {
@@ -132,25 +144,28 @@ describe('notifications routes', () => {
         method: 'POST',
         url: '/api/notifications',
         payload: {
-          userId: 'a0000000-0000-0000-0000-000000000001',
+          userId: '000000000000000000000001',
           type: 'room_invite',
           message: 'm',
         },
       });
-      const { id } = created.json();
+      const { _id } = created.json();
 
-      const res = await app.inject({ method: 'GET', url: `/api/notifications/${id}` });
+      const res = await app.inject({ method: 'GET', url: `/api/notifications/${_id}` });
       expect(res.statusCode).toBe(200);
       expect(res.json()).toMatchObject({
-        id,
-        userId: 'a0000000-0000-0000-0000-000000000001',
+        _id,
+        userId: '000000000000000000000001',
         type: 'room_invite',
         message: 'm',
       });
     });
 
     test('returns 404 when not found', async () => {
-      const res = await app.inject({ method: 'GET', url: '/api/notifications/9999' });
+      const res = await app.inject({
+        method: 'GET',
+        url: `/api/notifications/${new mongoose.Types.ObjectId().toString()}`,
+      });
       expect(res.statusCode).toBe(404);
 
       const body = res.json();
@@ -165,20 +180,23 @@ describe('notifications routes', () => {
         method: 'POST',
         url: '/api/notifications',
         payload: {
-          userId: 'a0000000-0000-0000-0000-000000000001',
+          userId: '000000000000000000000001',
           type: 'room_invite',
           message: 'm',
         },
       });
-      const { id } = created.json();
+      const { _id } = created.json();
 
-      const res = await app.inject({ method: 'PATCH', url: `/api/notifications/${id}/read` });
+      const res = await app.inject({ method: 'PATCH', url: `/api/notifications/${_id}/read` });
       expect(res.statusCode).toBe(200);
       expect(res.json().read).toBe(true);
     });
 
     test('returns 404 when not found', async () => {
-      const res = await app.inject({ method: 'PATCH', url: '/api/notifications/9999/read' });
+      const res = await app.inject({
+        method: 'PATCH',
+        url: `/api/notifications/${new mongoose.Types.ObjectId().toString()}/read`,
+      });
       expect(res.statusCode).toBe(404);
 
       const body = res.json();
@@ -193,28 +211,58 @@ describe('notifications routes', () => {
         method: 'POST',
         url: '/api/notifications',
         payload: {
-          userId: 'a0000000-0000-0000-0000-000000000001',
+          userId: '000000000000000000000001',
           type: 'room_invite',
           message: 'm',
         },
       });
-      const { id } = created.json();
+      const { _id } = created.json();
 
-      const del = await app.inject({ method: 'DELETE', url: `/api/notifications/${id}` });
+      const del = await app.inject({ method: 'DELETE', url: `/api/notifications/${_id}` });
       expect(del.statusCode).toBe(204);
       expect(del.payload).toBe('');
 
-      const get = await app.inject({ method: 'GET', url: `/api/notifications/${id}` });
+      const get = await app.inject({ method: 'GET', url: `/api/notifications/${_id}` });
       expect(get.statusCode).toBe(404);
     });
 
     test('returns 404 when not found', async () => {
-      const res = await app.inject({ method: 'DELETE', url: '/api/notifications/9999' });
+      const res = await app.inject({
+        method: 'DELETE',
+        url: `/api/notifications/${new mongoose.Types.ObjectId().toString()}`,
+      });
       expect(res.statusCode).toBe(404);
 
       const body = res.json();
       expect(body.success).toBe(false);
       expect(body.error.code).toBe('NOT_FOUND');
+    });
+  });
+
+  describe('persistence', () => {
+    test('survives an app restart', async () => {
+      const create = await app.inject({
+        method: 'POST',
+        url: '/api/notifications',
+        payload: {
+          userId: '000000000000000000000001',
+          type: 'system',
+          message: 'hi',
+        },
+      });
+
+      const { _id } = create.json();
+
+      await app.close();
+
+      const app2 = await buildApp();
+      await app2.ready();
+
+      const fetch = await app2.inject({ method: 'GET', url: `/api/notifications/${_id}` });
+
+      expect(fetch.statusCode).toBe(200);
+      expect(fetch.json().message).toBe('hi');
+      await app2.close();
     });
   });
 });
