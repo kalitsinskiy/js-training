@@ -6,6 +6,7 @@ import { startInMemoryMongo, stopInMemoryMongo } from '../test/helpers/mongo';
 
 describe('AppModule - Pino Logger wiring', () => {
   beforeAll(async () => {
+    process.env.JWT_SECRET = 'test-secret';
     await startInMemoryMongo();
   });
 

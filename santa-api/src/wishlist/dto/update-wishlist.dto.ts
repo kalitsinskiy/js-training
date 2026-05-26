@@ -1,6 +1,5 @@
 import {
   IsArray,
-  IsMongoId,
   IsNumber,
   IsOptional,
   IsString,
@@ -25,9 +24,6 @@ export class WishlistItemDto {
 }
 
 export class UpdateWishlistDto {
-  @IsMongoId()
-  userId!: string;
-
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => WishlistItemDto)

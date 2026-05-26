@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
+import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -8,11 +9,13 @@ import { RoomsModule } from './rooms/rooms.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptors';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { WishlistModule } from './wishlist/wishlist.module';
-import { LoggerModule } from 'nestjs-pino';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.MONGO_URL ?? 'mongodb://localhost:27017/santa-api'),
+    MongooseModule.forRoot(
+      process.env.MONGO_URL ?? 'mongodb://localhost:27017/santa-api',
+    ),
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
@@ -25,6 +28,7 @@ import { LoggerModule } from 'nestjs-pino';
     UsersModule,
     RoomsModule,
     WishlistModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [

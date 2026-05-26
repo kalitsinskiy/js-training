@@ -1,80 +1,103 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
-import { UsersController } from './users.controller';
-import { UsersService } from './users.service';
-import { User } from './users.service';
+import { Test } from '@nestjs/testing';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { MongooseModule, getModelToken } from '@nestjs/mongoose';
+import mongoose, { Model } from 'mongoose';
+import request from 'supertest';
+import { UsersModule } from './users.module';
+import { AuthModule } from '../auth/auth.module';
+import { User, UserSchema, UserDocument } from './schemas/users.schema';
+import {
+  startInMemoryMongo,
+  stopInMemoryMongo,
+} from '../../test/helpers/mongo';
 
-describe('UsersController', () => {
-  let controller: UsersController;
-  let service: jest.Mocked<UsersService>;
+describe('UsersController (HTTP)', () => {
+  let app: INestApplication;
+  let userModel: Model<UserDocument>;
+  let token: string;
+  let userId: string;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [UsersController],
-      providers: [
-        {
-          provide: UsersService,
-          useValue: {
-            create: jest.fn(),
-            findById: jest.fn(),
-          },
-        },
-      ],
+  beforeAll(async () => {
+    process.env.JWT_SECRET = 'test-secret';
+
+    const uri = await startInMemoryMongo();
+    const moduleRef = await Test.createTestingModule({
+      imports: [MongooseModule.forRoot(uri), UsersModule, AuthModule],
     }).compile();
 
-    controller = module.get<UsersController>(UsersController);
-    service = module.get<UsersService>(UsersService);
+    app = moduleRef.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
+    await app.init();
+
+    userModel = moduleRef.get<Model<UserDocument>>(getModelToken(User.name));
+    await userModel.ensureIndexes();
+  }, 30000);
+
+  afterAll(async () => {
+    await app.close();
+    await mongoose.disconnect();
+    await stopInMemoryMongo();
   });
 
-  test('should be defined', () => {
-    expect(controller).toBeDefined();
+  beforeEach(async () => {
+    await userModel.deleteMany({});
+
+    const res = await request(app.getHttpServer()).post('/auth/register').send({
+      email: 'me@example.com',
+      password: 'SecretPass1',
+      displayName: 'Me',
+    });
+
+    token = res.body.accessToken;
+    userId = res.body.id;
   });
 
-  describe('POST /users', () => {
-    test('delegates to service.create and returns the created user', async () => {
-      const created: User = {
-        id: 'abc-123',
-        name: 'Alice',
-        email: 'alice@example.com',
-        createdAt: new Date('2026-05-04T00:00:00Z'),
-      };
-      service.create.mockResolvedValue(created);
+  describe('GET /users/me', () => {
+    test('200 + profile when called with a valid token', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
 
-      const result = await controller.create({
-        name: 'Alice',
-        email: 'alice@example.com',
+      expect(res.body).toEqual({
+        id: userId,
+        name: 'Me',
+        email: 'me@example.com',
+        createdAt: expect.any(String),
       });
+    });
 
-      expect(service.create).toHaveBeenCalledWith({
-        name: 'Alice',
-        email: 'alice@example.com',
-      });
-      expect(result).toBe(created);
+    test('401 without Authorization header', async () => {
+      await request(app.getHttpServer()).get('/users/me').expect(401);
+    });
+
+    test('401 with a modified token', async () => {
+      await request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', `Bearer ${token}xxx`)
+        .expect(401);
+    });
+
+    test('401 with a malformed Authorization header', async () => {
+      await request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', token) // missing "Bearer " prefix
+        .expect(401);
     });
   });
 
-  describe('GET /users/:id', () => {
-    test('returns the user when it exists', async () => {
-      const found: User = {
-        id: 'abc-123',
-        name: 'Alice',
-        email: 'alice@example.com',
-        createdAt: new Date('2026-05-04T00:00:00Z'),
-      };
-      service.findById.mockResolvedValue(found);
-
-      const result = await controller.findOne('abc-123');
-
-      expect(service.findById).toHaveBeenCalledWith('abc-123');
-      expect(result).toBe(found);
-    });
-
-    test('throws NotFoundException when the user does not exist', async () => {
-      service.findById.mockReturnValue(undefined);
-
-      await expect(controller.findOne('missing')).rejects.toThrow(
-        NotFoundException,
-      );
+  describe('GET /users/:id (removed)', () => {
+    test('404 — old per-id route no longer exists', async () => {
+      await request(app.getHttpServer())
+        .get(`/users/${userId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404);
     });
   });
 });

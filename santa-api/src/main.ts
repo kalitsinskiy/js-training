@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import {
   FastifyAdapter,
   NestFastifyApplication,
@@ -15,6 +17,7 @@ async function bootstrap() {
   );
 
   app.useLogger(app.get(Logger));
+  app.setGlobalPrefix('api');
 
   app.useGlobalPipes(
     new ValidationPipe({

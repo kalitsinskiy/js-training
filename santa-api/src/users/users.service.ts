@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { User as UserSchemaClass, UserDocument } from './schemas/users.shcema';
+import { User as UserSchemaClass, UserDocument } from './schemas/users.schema';
 
 export interface User {
   id: string;
@@ -15,6 +15,12 @@ export interface CreateUserInput {
   email: string;
 }
 
+export interface CreateUserWithHashInput {
+  email: string;
+  displayName: string;
+  passwordHash: string;
+}
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -22,14 +28,12 @@ export class UsersService {
     private readonly userModel: Model<UserDocument>,
   ) {}
 
-  async create(input: CreateUserInput): Promise<User> {
-    const doc = await this.userModel.create({
-      email: input.email,
-      displayName: input.name,
-      passwordHash: 'TODO_LESSON_08',
+  async createWithHash(input: CreateUserWithHashInput): Promise<UserDocument> {
+    return this.userModel.create({
+      email: input.email.toLowerCase(),
+      displayName: input.displayName,
+      passwordHash: input.passwordHash,
     });
-
-    return this.toPublic(doc);
   }
 
   async findById(id: string): Promise<User | undefined> {
@@ -37,6 +41,19 @@ export class UsersService {
 
     const doc = await this.userModel.findById(id);
     return doc ? this.toPublic(doc) : undefined;
+  }
+
+  async findByEmail(
+    email: string,
+    opts: { withPassword?: boolean } = {},
+  ): Promise<UserDocument | null> {
+    const query = this.userModel.findOne({ email: email.toLowerCase() });
+
+    if (opts.withPassword) {
+      query.select('+passwordHash');
+    }
+
+    return query.exec();
   }
 
   private toPublic(doc: UserDocument): User {

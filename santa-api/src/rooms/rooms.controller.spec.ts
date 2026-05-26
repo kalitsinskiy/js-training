@@ -1,112 +1,199 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
-import { RoomsController } from './rooms.controller';
-import { RoomsService, type Room } from './rooms.service';
+import { Test } from '@nestjs/testing';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { MongooseModule, getModelToken } from '@nestjs/mongoose';
+import mongoose, { Model } from 'mongoose';
+import request from 'supertest';
+import { RoomsModule } from './rooms.module';
+import { UsersModule } from '../users/users.module';
+import { AuthModule } from '../auth/auth.module';
+import { User, UserSchema, UserDocument } from '../users/schemas/users.schema';
+import {
+  startInMemoryMongo,
+  stopInMemoryMongo,
+} from '../../test/helpers/mongo';
 
-const buildRoom = (overrides: Partial<Room> = {}): Room => ({
-  id: 'room-1',
-  name: 'Testing Room',
-  ownerId: 'owner-1',
-  code: 'ABC123',
-  members: ['owner-1'],
-  createdAt: new Date('2026-05-05T00:00:00Z'),
-  ...overrides,
-});
+describe('RoomsController (HTTP)', () => {
+  let app: INestApplication;
+  let userModel: Model<UserDocument>;
+  let token: string;
+  let userId: string;
 
-describe('RoomsController', () => {
-  let controller: RoomsController;
-  let service: jest.Mocked<RoomsService>;
+  beforeAll(async () => {
+    process.env.JWT_SECRET = 'test-secret';
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [RoomsController],
-      providers: [
-        {
-          provide: RoomsService,
-          useValue: {
-            create: jest.fn(),
-            findAll: jest.fn(),
-            findById: jest.fn(),
-            addMember: jest.fn(),
-          },
-        },
+    const uri = await startInMemoryMongo();
+    const moduleRef = await Test.createTestingModule({
+      imports: [
+        MongooseModule.forRoot(uri),
+        UsersModule,
+        AuthModule,
+        RoomsModule,
       ],
     }).compile();
 
-    controller = module.get<RoomsController>(RoomsController);
-    service = module.get(RoomsService);
+    app = moduleRef.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
+    await app.init();
+
+    userModel = moduleRef.get<Model<UserDocument>>(getModelToken(User.name));
+    await userModel.ensureIndexes();
+  }, 30000);
+
+  afterAll(async () => {
+    await app.close();
+    await mongoose.disconnect();
+    await stopInMemoryMongo();
   });
 
-  test('should be defined', () => {
-    expect(controller).toBeDefined();
+  beforeEach(async () => {
+    await userModel.db.collection('rooms').deleteMany({});
+    await userModel.deleteMany({});
+
+    const res = await request(app.getHttpServer()).post('/auth/register').send({
+      email: 'owner@example.com',
+      password: 'SecretPass1',
+      displayName: 'Owner',
+    });
+
+    token = res.body.accessToken;
+    userId = res.body.id;
   });
 
   describe('POST /rooms', () => {
-    test('delegates to service.create and return the created room', async () => {
-      const room = buildRoom();
-      service.create.mockResolvedValue(room);
+    test('201 + creates a room owned by the authenticated user', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/rooms')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Office Secret Santa' })
+        .expect(201);
 
-      const result = await controller.create({
-        name: 'Testing Room',
-        ownerId: 'owner-1',
+      expect(res.body).toEqual({
+        id: expect.any(String),
+        name: 'Office Secret Santa',
+        ownerId: userId,
+        code: expect.any(String),
+        members: [userId],
+        createdAt: expect.any(String),
       });
+    });
 
-      expect(service.create).toHaveBeenCalledWith({
-        name: 'Testing Room',
-        ownerId: 'owner-1',
-      });
-      expect(result).toBe(room);
+    test('401 without Authorization header', async () => {
+      await request(app.getHttpServer())
+        .post('/rooms')
+        .send({ name: 'Office Secret Santa' })
+        .expect(401);
+    });
+
+    test('400 if `ownerId` is sent in the body (whitelist)', async () => {
+      await request(app.getHttpServer())
+        .post('/rooms')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Office Secret Santa', ownerId: 'someone-else' })
+        .expect(400);
+    });
+
+    test('400 if name is too short', async () => {
+      await request(app.getHttpServer())
+        .post('/rooms')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'X' })
+        .expect(400);
     });
   });
 
   describe('GET /rooms', () => {
     test('returns all rooms', async () => {
-      const rooms = [
-        buildRoom({ id: 'a' }),
-        buildRoom({ id: 'b', code: 'XYZ789' }),
-      ];
-      service.findAll.mockResolvedValue(rooms);
+      await request(app.getHttpServer())
+        .post('/rooms')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Room A' });
+      await request(app.getHttpServer())
+        .post('/rooms')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Room B' });
 
-      expect(await controller.findAll()).toBe(rooms);
-      expect(service.findAll).toHaveBeenCalledTimes(1);
+      const res = await request(app.getHttpServer())
+        .get('/rooms')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(res.body).toHaveLength(2);
+    });
+
+    test('401 without token', async () => {
+      await request(app.getHttpServer()).get('/rooms').expect(401);
     });
   });
 
   describe('GET /rooms/:id', () => {
     test('returns the room when it exists', async () => {
-      const room = buildRoom();
-      service.findById.mockResolvedValue(room);
+      const created = await request(app.getHttpServer())
+        .post('/rooms')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Some Room' });
 
-      expect(await controller.findOne('room-1')).toBe(room);
-      expect(service.findById).toHaveBeenCalledWith('room-1');
+      const res = await request(app.getHttpServer())
+        .get(`/rooms/${created.body.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(res.body.id).toBe(created.body.id);
     });
 
-    test('throws NotFoundException when the room does not exist', async () => {
-      service.findById.mockResolvedValue(undefined);
-
-      await expect(controller.findOne('missing')).rejects.toThrow(
-        NotFoundException,
-      );
+    test('404 when the room does not exist', async () => {
+      const fakeId = new mongoose.Types.ObjectId().toString();
+      await request(app.getHttpServer())
+        .get(`/rooms/${fakeId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404);
     });
   });
 
   describe('POST /rooms/:code/join', () => {
-    test('delegates to service.addMember and returns the updated room', async () => {
-      const updated = buildRoom({ members: ['owner-1', 'user-2'] });
-      service.addMember.mockResolvedValue(updated);
+    test('200 + adds the authenticated user to the room', async () => {
+      // owner creates a room
+      const created = await request(app.getHttpServer())
+        .post('/rooms')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Open Room' });
+      const code = created.body.code;
 
-      const result = await controller.join('ABC123', { userId: 'user-2' });
+      // a second user registers and joins
+      const joinerRes = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          email: 'joiner@example.com',
+          password: 'SecretPass1',
+          displayName: 'Joiner',
+        });
+      const joinerToken = joinerRes.body.accessToken;
+      const joinerId = joinerRes.body.id;
 
-      expect(service.addMember).toHaveBeenCalledWith('ABC123', 'user-2');
-      expect(result).toBe(updated);
+      const res = await request(app.getHttpServer())
+        .post(`/rooms/${code}/join`)
+        .set('Authorization', `Bearer ${joinerToken}`)
+        .expect(200);
+
+      expect(res.body.members).toEqual(
+        expect.arrayContaining([userId, joinerId]),
+      );
     });
 
-    test('throws NotFoundException when no room has that code', async () => {
-      service.addMember.mockResolvedValue(undefined);
+    test('404 when the code is unknown', async () => {
+      await request(app.getHttpServer())
+        .post('/rooms/ZZZZZZ/join')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404);
+    });
 
-      await expect(
-        controller.join('ZZZZZZ', { userId: 'user-2' }),
-      ).rejects.toThrow(NotFoundException);
+    test('401 without token', async () => {
+      await request(app.getHttpServer()).post('/rooms/ABC123/join').expect(401);
     });
   });
 });

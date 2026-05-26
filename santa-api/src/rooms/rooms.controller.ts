@@ -7,22 +7,24 @@ import {
   NotFoundException,
   Param,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { RoomsService, type Room } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
-import { JoinRoomDto } from './dto/join-room.dto';
-
-interface JoinRoomInput {
-  userId: string;
-}
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('rooms')
+@UseGuards(JwtAuthGuard)
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
   @Post()
-  async create(@Body() input: CreateRoomDto): Promise<Room> {
-    return this.roomsService.create(input);
+  async create(
+    @CurrentUser('id') userId: string,
+    @Body() dto: CreateRoomDto,
+  ): Promise<Room> {
+    return this.roomsService.create({ name: dto.name, ownerId: userId });
   }
 
   @Get()
@@ -33,11 +35,7 @@ export class RoomsController {
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<Room> {
     const room = await this.roomsService.findById(id);
-
-    if (!room) {
-      throw new NotFoundException(`Room ${id} not found`);
-    }
-
+    if (!room) throw new NotFoundException(`Room ${id} not found`);
     return room;
   }
 
@@ -45,14 +43,10 @@ export class RoomsController {
   @HttpCode(HttpStatus.OK)
   async join(
     @Param('code') code: string,
-    @Body() input: JoinRoomDto,
+    @CurrentUser('id') userId: string,
   ): Promise<Room> {
-    const room = await this.roomsService.addMember(code, input.userId);
-
-    if (!room) {
-      throw new NotFoundException(`Room with code ${code} not found`);
-    }
-
+    const room = await this.roomsService.addMember(code, userId);
+    if (!room) throw new NotFoundException(`Room with code ${code} not found`);
     return room;
   }
 }
