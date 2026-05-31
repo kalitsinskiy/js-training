@@ -2,6 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Room as RoomSchemaClass, RoomDocument } from './schemas/room.schema';
+import {
+  paginate,
+  PaginationQuery,
+  PaginatedResponse,
+} from '../common/pagination';
 
 export interface Room {
   id: string;
@@ -35,9 +40,19 @@ export class RoomsService {
     return this.toPublic(doc);
   }
 
-  async findAll(): Promise<Room[]> {
-    const docs = await this.roomModel.find();
-    return docs.map((doc) => this.toPublic(doc));
+  async findByUser(
+    userId: string,
+    query: PaginationQuery,
+  ): Promise<PaginatedResponse<Room>> {
+    const result = await paginate(
+      this.roomModel,
+      { participants: userId },
+      query,
+    );
+    return {
+      data: result.data.map((doc) => this.toPublic(doc as RoomDocument)),
+      meta: result.meta,
+    };
   }
 
   async findById(id: string): Promise<Room | undefined> {

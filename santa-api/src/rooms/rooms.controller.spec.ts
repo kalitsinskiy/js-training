@@ -107,23 +107,136 @@ describe('RoomsController (HTTP)', () => {
     });
   });
 
-  describe('GET /rooms', () => {
-    test('returns all rooms', async () => {
-      await request(app.getHttpServer())
-        .post('/rooms')
+  describe('GET /rooms (paginated)', () => {
+    test('returns {data, meta} shape even when empty', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/rooms')
         .set('Authorization', `Bearer ${token}`)
-        .send({ name: 'Room A' });
-      await request(app.getHttpServer())
-        .post('/rooms')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ name: 'Room B' });
+        .expect(200);
+
+      expect(res.body).toEqual({
+        data: [],
+        meta: { total: 0, page: 1, limit: 10, totalPages: 1 },
+      });
+    });
+
+    test('returns the user`s rooms with default page/limit', async () => {
+      for (const name of ['Room A', 'Room B', 'Room C']) {
+        await request(app.getHttpServer())
+          .post('/rooms')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name });
+      }
 
       const res = await request(app.getHttpServer())
         .get('/rooms')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
-      expect(res.body).toHaveLength(2);
+      expect(res.body.data).toHaveLength(3);
+      expect(res.body.meta).toEqual({
+        total: 3,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      });
+    });
+
+    test('limit slices the page; totalPages reflects total', async () => {
+      for (const name of ['Room A', 'Room B', 'Room C']) {
+        await request(app.getHttpServer())
+          .post('/rooms')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name });
+      }
+
+      const res = await request(app.getHttpServer())
+        .get('/rooms?page=1&limit=2')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(res.body.data).toHaveLength(2);
+      expect(res.body.meta).toEqual({
+        total: 3,
+        page: 1,
+        limit: 2,
+        totalPages: 2,
+      });
+    });
+
+    test('page=2 returns the next slice', async () => {
+      for (const name of ['Room A', 'Room B', 'Room C']) {
+        await request(app.getHttpServer())
+          .post('/rooms')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name });
+      }
+
+      const res = await request(app.getHttpServer())
+        .get('/rooms?page=2&limit=2')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.meta.page).toBe(2);
+      expect(res.body.meta.totalPages).toBe(2);
+    });
+
+    test('beyond last page -> empty data, accurate meta', async () => {
+      for (const name of ['Room A', 'Room B', 'Room C']) {
+        await request(app.getHttpServer())
+          .post('/rooms')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name });
+      }
+
+      const res = await request(app.getHttpServer())
+        .get('/rooms?page=10&limit=2')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(res.body.data).toEqual([]);
+      expect(res.body.meta.total).toBe(3);
+      expect(res.body.meta.totalPages).toBe(2);
+    });
+
+    test('clamps limit > 100 and page < 1', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/rooms?page=-1&limit=999')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(res.body.meta.page).toBe(1);
+      expect(res.body.meta.limit).toBe(100);
+    });
+
+    test('returns only rooms the user is a participant in', async () => {
+      await request(app.getHttpServer())
+        .post('/rooms')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'My Room' });
+
+      const otherUser = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          email: 'other@example.com',
+          password: 'SecretPass1',
+          displayName: 'Other',
+        });
+
+      const otherToken = otherUser.body.accessToken;
+      await request(app.getHttpServer())
+        .post('/rooms')
+        .set('Authorization', `Bearer ${otherToken}`)
+        .send({ name: 'Other Room' });
+
+      const res = await request(app.getHttpServer())
+        .get('/rooms')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].name).toBe('My Room');
     });
 
     test('401 without token', async () => {

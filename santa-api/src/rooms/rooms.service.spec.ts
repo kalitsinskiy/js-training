@@ -80,18 +80,43 @@ describe('RoomsService', () => {
     });
   });
 
-  describe('findAll', () => {
-    test('returns an empty array when no rooms exist', async () => {
-      expect(await service.findAll()).toEqual([]);
+  describe('findByUser', () => {
+    test('returns an empty paginated result when the user has no rooms', async () => {
+      const result = await service.findByUser('user-1', {});
+
+      expect(result).toEqual({
+        data: [],
+        meta: { total: 0, page: 1, limit: 10, totalPages: 1 },
+      });
     });
 
-    test('returns every created room', async () => {
-      const a = await service.create({ name: 'A', ownerId: 'o' });
-      const b = await service.create({ name: 'B', ownerId: 'o' });
+    test('returns rooms where the user is a participant', async () => {
+      const a = await service.create({ name: 'Room A', ownerId: 'owner-1' });
+      const b = await service.create({ name: 'Room B', ownerId: 'owner-1' });
+      // A room owned by someone else — should not appear
+      await service.create({ name: 'Room C', ownerId: 'someone-else' });
 
-      const all = await service.findAll();
-      expect(all).toEqual(expect.arrayContaining([a, b]));
-      expect(all).toHaveLength(2);
+      const result = await service.findByUser('owner-1', {});
+
+      expect(result.data).toEqual(expect.arrayContaining([a, b]));
+      expect(result.data).toHaveLength(2);
+      expect(result.meta.total).toBe(2);
+    });
+
+    test('applies pagination', async () => {
+      for (const name of ['Room A', 'Room B', 'Room C']) {
+        await service.create({ name, ownerId: 'owner-1' });
+      }
+
+      const result = await service.findByUser('owner-1', { page: 1, limit: 2 });
+
+      expect(result.data).toHaveLength(2);
+      expect(result.meta).toEqual({
+        total: 3,
+        page: 1,
+        limit: 2,
+        totalPages: 2,
+      });
     });
   });
 

@@ -7,13 +7,13 @@ import { startInMemoryMongo, stopInMemoryMongo } from '../test/helpers/mongo';
 describe('AppModule - Pino Logger wiring', () => {
   beforeAll(async () => {
     process.env.JWT_SECRET = 'test-secret';
-    await startInMemoryMongo();
-  });
+    process.env.MONGO_URL = await startInMemoryMongo();
+  }, 30000);
 
   afterAll(async () => {
     await mongoose.disconnect();
     await stopInMemoryMongo();
-  });
+  }, 30000);
 
   test('Logger from nestjs-pino is available in the DI container', async () => {
     const moduleRef = await Test.createTestingModule({
@@ -26,5 +26,5 @@ describe('AppModule - Pino Logger wiring', () => {
     expect(typeof logger.log).toBe('function');
 
     await moduleRef.close();
-  });
+  }, 30000);
 });
