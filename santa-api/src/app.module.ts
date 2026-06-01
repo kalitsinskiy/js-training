@@ -16,9 +16,11 @@ import { WishlistModule } from './wishlist/wishlist.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot(
-      process.env.MONGO_URL ?? 'mongodb://localhost:27017/santa-api',
-    ),
+    MongooseModule.forRootAsync({
+      useFactory: () => ({
+        uri: process.env.MONGO_URL ?? 'mongodb://localhost:27017/santa-api',
+      }),
+    }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     LoggerModule.forRoot({
       pinoHttp: {

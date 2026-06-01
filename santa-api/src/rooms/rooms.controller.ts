@@ -80,8 +80,11 @@ export class RoomsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Room not found' })
-  findById(@Param('id') id: string): Promise<Room> {
-    return this.roomsService.findById(id);
+  findById(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+  ): Promise<Room> {
+    return this.roomsService.findByIdForUser(id, userId);
   }
 
   @Post(':code/join')

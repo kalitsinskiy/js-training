@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { UsersService } from '../users/users.service';
@@ -27,6 +32,7 @@ export class RoomsService {
       creatorId: ownerId,
       inviteCode: await this.generateCode(),
       participants: [ownerId],
+      status: 'pending',
     });
 
     return this.toRoom(room);
@@ -49,21 +55,39 @@ export class RoomsService {
   }
 
   async findById(id: string): Promise<Room> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new NotFoundException(`Room ${id} not found`);
-    }
+    const room = await this.findRoomDocumentById(id);
 
-    const room = await this.roomModel.findById(id).exec();
+    return this.toRoom(room);
+  }
 
-    if (!room) {
-      throw new NotFoundException(`Room ${id} not found`);
+  async findByIdForUser(id: string, userId: string): Promise<Room> {
+    const room = await this.findRoomDocumentById(id);
+
+    if (
+      !room.participants.some(
+        (participant) => participant.toString() === userId,
+      )
+    ) {
+      throw new ForbiddenException(`Room ${id} is not accessible`);
     }
 
     return this.toRoom(room);
   }
 
-  async joinByCode(code: string, userId: string): Promise<Room> {
+  async join(code: string, userId: string): Promise<Room> {
     await this.usersService.findById(userId);
+
+    const existingRoom = await this.roomModel
+      .findOne({ inviteCode: code })
+      .exec();
+
+    if (!existingRoom) {
+      throw new NotFoundException(`Room with code ${code} not found`);
+    }
+
+    if (existingRoom.status === 'drawn') {
+      throw new ForbiddenException('Room draw has already been completed');
+    }
 
     const room = await this.roomModel
       .findOneAndUpdate(
@@ -78,6 +102,40 @@ export class RoomsService {
     }
 
     return this.toRoom(room);
+  }
+
+  async joinByCode(code: string, userId: string): Promise<Room> {
+    return this.join(code, userId);
+  }
+
+  async draw(id: string): Promise<Room> {
+    const room = await this.findRoomDocumentById(id);
+
+    if (room.participants.length < 3) {
+      throw new BadRequestException(
+        'At least 3 participants are required to draw',
+      );
+    }
+
+    const drawDate = new Date();
+    const assignments = this.buildAssignments(room.participants);
+    const updatedRoom = await this.roomModel
+      .findByIdAndUpdate(
+        id,
+        {
+          status: 'drawn',
+          drawDate,
+          assignments,
+        },
+        { new: true },
+      )
+      .exec();
+
+    if (!updatedRoom) {
+      throw new NotFoundException(`Room ${id} not found`);
+    }
+
+    return this.toRoom(updatedRoom);
   }
 
   private async generateCode(): Promise<string> {
@@ -99,6 +157,52 @@ export class RoomsService {
         return inviteCode;
       }
     }
+  }
+
+  private async findRoomDocumentById(id: string): Promise<RoomDocument> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new NotFoundException(`Room ${id} not found`);
+    }
+
+    const room = await this.roomModel.findById(id).exec();
+
+    if (!room) {
+      throw new NotFoundException(`Room ${id} not found`);
+    }
+
+    return room;
+  }
+
+  private buildAssignments(
+    participants: Types.ObjectId[],
+  ): Array<{ giverId: Types.ObjectId; receiverId: Types.ObjectId }> {
+    const shuffledParticipants = [...participants];
+
+    for (let index = shuffledParticipants.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      const currentParticipant = shuffledParticipants[index];
+
+      shuffledParticipants[index] = shuffledParticipants[swapIndex];
+      shuffledParticipants[swapIndex] = currentParticipant;
+    }
+
+    const hasSelfAssignment = shuffledParticipants.some((participant, index) =>
+      participant.equals(participants[index]),
+    );
+
+    if (hasSelfAssignment) {
+      const rotatedParticipants = [...participants.slice(1), participants[0]];
+
+      return participants.map((participant, index) => ({
+        giverId: participant,
+        receiverId: rotatedParticipants[index],
+      }));
+    }
+
+    return participants.map((participant, index) => ({
+      giverId: participant,
+      receiverId: shuffledParticipants[index],
+    }));
   }
 
   private toRoom(room: RoomDocument): Room {
