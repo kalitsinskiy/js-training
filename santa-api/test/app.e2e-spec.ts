@@ -14,6 +14,7 @@ describe('AppController (e2e)', () => {
   let connection: Connection;
 
   beforeAll(async () => {
+    process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
     await startInMemoryMongo();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({

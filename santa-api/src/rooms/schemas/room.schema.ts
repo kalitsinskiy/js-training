@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 
 export type RoomDocument = HydratedDocument<Room>;
 
@@ -22,6 +22,9 @@ export class Room {
 
   @Prop()
   drawDate?: Date;
+
+  @Prop({ type: MongooseSchema.Types.Mixed })
+  assignments?: Record<string, string>;
 }
 
 export const RoomSchema = SchemaFactory.createForClass(Room);

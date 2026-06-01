@@ -6,7 +6,7 @@ import request from 'supertest';
 import { RoomsModule } from './rooms.module';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
-import { User, UserSchema, UserDocument } from '../users/schemas/users.schema';
+import { User, UserDocument } from '../users/schemas/users.schema';
 import {
   startInMemoryMongo,
   stopInMemoryMongo,
@@ -79,6 +79,7 @@ describe('RoomsController (HTTP)', () => {
         ownerId: userId,
         code: expect.any(String),
         members: [userId],
+        status: 'pending',
         createdAt: expect.any(String),
       });
     });

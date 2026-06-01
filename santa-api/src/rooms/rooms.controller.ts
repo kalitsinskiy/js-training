@@ -82,6 +82,7 @@ export class RoomsController {
   @ApiOperation({ summary: 'Join a room by its invite code.' })
   @ApiParam({ name: 'code', description: '6-character invite code.' })
   @ApiResponse({ status: 200, description: 'Joined. Updated room returned.' })
+  @ApiResponse({ status: 403, description: 'Room is already drawn.' })
   @ApiResponse({ status: 404, description: 'Not found room with the code.' })
   async join(
     @Param('code') code: string,
@@ -90,5 +91,32 @@ export class RoomsController {
     const room = await this.roomsService.addMember(code, userId);
     if (!room) throw new NotFoundException(`Room with code ${code} not found`);
     return room;
+  }
+
+  @Post(':id/draw')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Run the Secret Snata draw for a room.',
+    description:
+      'Owner-only. Assings each participant a recipient (no self-assignment),' +
+      'flips status to "drawn" and stamps drawDate. Requires at least 3 participants.' +
+      'Refuses to re-draw a room that is already drawn.',
+  })
+  @ApiParam({ name: 'id', description: 'Room ObjectId.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Draw complete. Room returned with assignments populated.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Room is already drawn or has fewer than 3 participants.',
+  })
+  @ApiResponse({ status: 401, description: 'Missing or invalid token.' })
+  @ApiResponse({ status: 404, description: 'Room not found.' })
+  async draw(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+  ): Promise<Room> {
+    return this.roomsService.draw(id, userId);
   }
 }

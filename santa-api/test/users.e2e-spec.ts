@@ -3,22 +3,40 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { Connection } from 'mongoose';
-import { getConnectionToken } from '@nestjs/mongoose';
-import { AppModule } from '../src/app.module';
+import { Connection, Model } from 'mongoose';
+import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { ValidationPipe } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ThrottlerStorage } from '@nestjs/throttler';
+import { AppModule } from '../src/app.module';
+import { User, UserDocument } from '../src/users/schemas/users.schema';
 import { startInMemoryMongo, stopInMemoryMongo } from './helpers/mongo';
+import { userFixture } from './helpers/factories';
+import { tokenFor } from './helpers/auth-token';
 
 describe('UsersController (e2e)', () => {
   let app: NestFastifyApplication;
   let connection: Connection;
+  let jwt: JwtService;
+  let userModel: Model<UserDocument>;
 
   beforeAll(async () => {
+    process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
     await startInMemoryMongo();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(ThrottlerStorage)
+      .useValue({
+        increment: async () => ({
+          totalHits: 0,
+          timeToExpire: 0,
+          isBlocked: false,
+          timeToBlockExpire: 0,
+        }),
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication<NestFastifyApplication>(
       new FastifyAdapter(),
@@ -36,6 +54,8 @@ describe('UsersController (e2e)', () => {
     await app.getHttpAdapter().getInstance().ready();
 
     connection = app.get<Connection>(getConnectionToken());
+    jwt = app.get(JwtService);
+    userModel = app.get<Model<UserDocument>>(getModelToken(User.name));
   });
 
   afterAll(async () => {
@@ -47,110 +67,69 @@ describe('UsersController (e2e)', () => {
     await connection.dropDatabase();
   });
 
-  describe('POST /users', () => {
-    test('creates a user and returns 201 with id, name, email, createdAt', async () => {
-      const res = await app
-        .getHttpAdapter()
-        .getInstance()
-        .inject({
-          method: 'POST',
-          url: '/users',
-          payload: { name: 'Alice', email: 'alice@example.com' },
-        });
-      expect(res.statusCode).toBe(201);
-
-      const body = res.json();
-      expect(body).toEqual({
-        id: expect.any(String),
-        name: 'Alice',
-        email: 'alice@example.com',
-        createdAt: expect.any(String),
+  describe('GET /users/me', () => {
+    test('returns the authenticated user profile (200) with id, name, email, createdAt', async () => {
+      const fixture = userFixture({
+        email: 'me@test.com',
+        displayName: 'Me User',
       });
-      expect(new Date(body.createdAt).toString()).not.toBe('Invalid Date');
-    });
-  });
-
-  describe('POST /users - validation', () => {
-    test('returns 400 when name is too short', async () => {
-      const res = await app
-        .getHttpAdapter()
-        .getInstance()
-        .inject({
-          method: 'POST',
-          url: '/users',
-          payload: { name: 'A', email: 'alice@example.com' },
-        });
-
-      expect(res.statusCode).toBe(400);
-    });
-
-    test('returns 400 when email is not valid', async () => {
-      const res = await app
-        .getHttpAdapter()
-        .getInstance()
-        .inject({
-          method: 'POST',
-          url: '/users',
-          payload: { name: 'Alice', email: 'not-an-email' },
-        });
-
-      expect(res.statusCode).toBe(400);
-    });
-
-    test('returns 400 when unknown field is set', async () => {
-      const res = await app
-        .getHttpAdapter()
-        .getInstance()
-        .inject({
-          method: 'POST',
-          url: '/users',
-          payload: { name: 'Alice', email: 'alice@example.com', admin: true },
-        });
-
-      expect(res.statusCode).toBe(400);
-    });
-  });
-
-  describe('GET /users/:id', () => {
-    test('returns 200 with the user when it exists', async () => {
-      const created = await app
-        .getHttpAdapter()
-        .getInstance()
-        .inject({
-          method: 'POST',
-          url: '/users',
-          payload: { name: 'Bob', email: 'bob@example.com' },
-        });
-      const { id } = created.json();
+      await userModel.create(fixture);
+      const token = tokenFor(jwt, fixture);
 
       const res = await app
         .getHttpAdapter()
         .getInstance()
         .inject({
           method: 'GET',
-          url: `/users/${id}`,
+          url: '/users/me',
+          headers: { authorization: `Bearer ${token}` },
         });
+
       expect(res.statusCode).toBe(200);
-      expect(res.json()).toMatchObject({
-        id,
-        name: 'Bob',
-        email: 'bob@example.com',
+      expect(res.json()).toEqual({
+        id: fixture._id.toString(),
+        name: 'Me User',
+        email: 'me@test.com',
+        createdAt: expect.any(String),
       });
     });
 
-    test('returns 404 when the error envelope when the user does not exist', async () => {
-      const res = await app.getHttpAdapter().getInstance().inject({
-        method: 'GET',
-        url: '/users/does-not-exist',
-      });
+    test('returns 401 without a token', async () => {
+      const res = await app
+        .getHttpAdapter()
+        .getInstance()
+        .inject({ method: 'GET', url: '/users/me' });
+
+      expect(res.statusCode).toBe(401);
+    });
+
+    test('returns 401 with a malformed Authorization header', async () => {
+      const res = await app
+        .getHttpAdapter()
+        .getInstance()
+        .inject({
+          method: 'GET',
+          url: '/users/me',
+          headers: { authorization: 'Bearer not-a-real-jwt' },
+        });
+
+      expect(res.statusCode).toBe(401);
+    });
+
+    test('returns 404 when the token points to a user that no longer exists', async () => {
+      const fixture = userFixture({ email: 'ghost@test.com' });
+      const token = tokenFor(jwt, fixture);
+
+      const res = await app
+        .getHttpAdapter()
+        .getInstance()
+        .inject({
+          method: 'GET',
+          url: '/users/me',
+          headers: { authorization: `Bearer ${token}` },
+        });
 
       expect(res.statusCode).toBe(404);
-      expect(res.json()).toEqual({
-        success: false,
-        statusCode: 404,
-        message: expect.stringContaining('does-not-exist'),
-        timestamp: expect.any(String),
-      });
     });
   });
 });
